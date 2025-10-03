@@ -18,19 +18,24 @@ while (true)
 
     // Perform a blocking call to accept requests.
     // You could also use server.AcceptSocket() here.
-    using TcpClient client = server.AcceptTcpClient();
+    TcpClient client = server.AcceptTcpClient();
 
-    // Get a stream object for reading and writing
-    NetworkStream stream = client.GetStream();
 
-    int i;
-
-    // Loop to receive all the data sent by the client.
-    while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
+    var thread = new Thread(() =>
     {
-        byte[] msg = System.Text.Encoding.ASCII.GetBytes("+PONG\r\n");
+        // Get a stream object for reading and writing
+        NetworkStream stream = client.GetStream();
 
-        // Send back a response.
-        stream.Write(msg, 0, msg.Length);
-    }
+        int i;
+
+        // Loop to receive all the data sent by the client.
+        while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
+        {
+            byte[] msg = System.Text.Encoding.ASCII.GetBytes("+PONG\r\n");
+
+            // Send back a response.
+            stream.Write(msg, 0, msg.Length);
+        }
+    });
+    thread.Start();
 }
