@@ -31,11 +31,74 @@ while (true)
         // Loop to receive all the data sent by the client.
         while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
         {
-            byte[] msg = System.Text.Encoding.ASCII.GetBytes("+PONG\r\n");
+            string request = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
+            List<object> parsed = ParseRespArray(request);
+            foreach (var item in parsed)
+            {
+                Console.Write(item + " ");
+            }
+            byte[] msg = [];
+            if (parsed[0].ToString() == "PING")
+            {
+                msg = System.Text.Encoding.ASCII.GetBytes("+PONG\r\n");
+            } else if (parsed[0].ToString() == "ECHO" && parsed.Count > 1)
+            {
+                msg = System.Text.Encoding.ASCII.GetBytes(EncodeBulkString(parsed[1].ToString()));
+            }
 
-            // Send back a response.
             stream.Write(msg, 0, msg.Length);
+            // Send back a response.
         }
     });
     thread.Start();
+}
+
+string EncodeBulkString(string str)
+{
+    return $"${str.Length}\r\n{str}\r\n";
+}
+
+List<object> ParseRespArray(string resp)
+{
+    var result = new List<object>();
+    var lines = resp.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
+    int i = 0;
+    while (i < lines.Length)
+    {
+        if (lines[i].StartsWith("*"))
+        {
+            int arrayLength = int.Parse(lines[i].Substring(1));
+            i++;
+            for (int j = 0; j < arrayLength; j++)
+            {
+                if (lines[i].StartsWith("$"))
+                {
+                    int strLength = int.Parse(lines[i].Substring(1));
+                    i++;
+                    result.Add(lines[i]);
+                    i++;
+                }
+                else if (lines[i].StartsWith(":"))
+                {
+                    result.Add(int.Parse(lines[i].Substring(1)));
+                    i++;
+                }
+                else if (lines[i].StartsWith("+"))
+                {
+                    result.Add(lines[i].Substring(1));
+                    i++;
+                }
+                else if (lines[i].StartsWith("-"))
+                {
+                    result.Add(new Exception(lines[i].Substring(1)));
+                    i++;
+                }
+            }
+        }
+        else
+        {
+            i++;
+        }
+    }
+    return result;
 }
