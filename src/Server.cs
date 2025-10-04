@@ -142,6 +142,21 @@ while (true)
                     msg = System.Text.Encoding.ASCII.GetBytes("*0\r\n");
                 }
             }
+            else if (parsed[0].ToString() == "LPUSH" && parsed.Count > 2)
+            {
+                var key = parsed[1].ToString();
+                var values = parsed.Skip(2).Select(v => v.ToString()).ToList();
+
+                if (!store.ContainsKey(key))
+                {
+                    store[key] = new Item { Value = new List<string>(), Expiration = null };
+                }
+                foreach (var value in values)
+                {
+                    ((List<string>)store[key].Value).Insert(0, value);
+                }
+                msg = System.Text.Encoding.ASCII.GetBytes(":" + ((List<string>)store[key].Value).Count + "\r\n");
+            }
             else
             {
                 msg = System.Text.Encoding.ASCII.GetBytes("-ERR unknown command\r\n");
