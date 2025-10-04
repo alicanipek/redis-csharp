@@ -11,7 +11,7 @@ server.Start();
 // Buffer for reading data
 Byte[] bytes = new Byte[256];
 
-Dictionary<string, string> store = new Dictionary<string, string>();
+Dictionary<string, Item> store = new Dictionary<string, Item>();
 
 // Enter the listening loop.
 while (true)
@@ -50,13 +50,33 @@ while (true)
             }
             else if (parsed[0].ToString() == "SET" && parsed.Count > 2)
             {
-                store[parsed[1].ToString()] = parsed[2].ToString();
+                var key = parsed[1].ToString();
+                var value = parsed[2].ToString();
+                if (parsed.Count > 3 && parsed[3].ToString().ToUpper() == "PX" && parsed.Count > 4)
+                {
+                    var px = int.Parse(parsed[4].ToString());
+                    store[key] = new Item { Value = value, Expiration = DateTime.Now.AddMilliseconds(px) };
+                }
+                else
+                {
+                    store[key] = new Item { Value = value, Expiration = null };
+                }
                 msg = System.Text.Encoding.ASCII.GetBytes("+OK\r\n");
             }
             else if (parsed[0].ToString() == "GET" && parsed.Count > 1)
             {
-                if (store.TryGetValue(parsed[1].ToString(), out var value))
+                if (store.TryGetValue(parsed[1].ToString(), out var item))
                 {
+                    string value = null;
+                    if (item.Expiration == null || item.Expiration > DateTime.Now)
+                    {
+                        value = item.Value;
+                    }
+                    else
+                    {
+                        store.Remove(parsed[1].ToString());
+                    }
+                    // Return the value
                     msg = System.Text.Encoding.ASCII.GetBytes(EncodeBulkString(value));
                 }
                 else
@@ -78,6 +98,10 @@ while (true)
 
 string EncodeBulkString(string str)
 {
+    if (str == null)
+    {
+        return "$-1\r\n";
+    }
     return $"${str.Length}\r\n{str}\r\n";
 }
 
