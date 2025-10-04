@@ -115,8 +115,8 @@ while (true)
                     else
                     {
                         // Handle negative indices
-                        if (start < 0) start = list.Count + start;
-                        if (stop < 0) stop = list.Count + stop;
+                        if (start < 0) start = list.Count + start < 0 ? 0 : list.Count + start;
+                        if (stop < 0) stop = list.Count + stop < 0 ? 0 : list.Count + stop;
 
                         // Adjust stop to be inclusive
                         stop = Math.Min(stop, list.Count - 1);
