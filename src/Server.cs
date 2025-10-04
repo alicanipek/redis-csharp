@@ -87,13 +87,16 @@ while (true)
             else if (parsed[0].ToString() == "RPUSH" && parsed.Count > 2)
             {
                 var key = parsed[1].ToString();
-                var value = parsed[2].ToString();
+                var values = parsed.Skip(2).Select(v => v.ToString()).ToList();
+
                 if (!store.ContainsKey(key))
                 {
                     store[key] = new Item { Value = new List<string>(), Expiration = null };
-                
                 }
-                ((List<string>)store[key].Value).Add(value);
+                foreach (var value in values)
+                {
+                    ((List<string>)store[key].Value).Add(value);
+                }
                 msg = System.Text.Encoding.ASCII.GetBytes(":" + ((List<string>)store[key].Value).Count + "\r\n");
             }
             else
