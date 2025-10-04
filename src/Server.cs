@@ -11,6 +11,8 @@ server.Start();
 // Buffer for reading data
 Byte[] bytes = new Byte[256];
 
+Dictionary<string, string> store = new Dictionary<string, string>();
+
 // Enter the listening loop.
 while (true)
 {
@@ -41,9 +43,30 @@ while (true)
             if (parsed[0].ToString() == "PING")
             {
                 msg = System.Text.Encoding.ASCII.GetBytes("+PONG\r\n");
-            } else if (parsed[0].ToString() == "ECHO" && parsed.Count > 1)
+            }
+            else if (parsed[0].ToString() == "ECHO" && parsed.Count > 1)
             {
                 msg = System.Text.Encoding.ASCII.GetBytes(EncodeBulkString(parsed[1].ToString()));
+            }
+            else if (parsed[0].ToString() == "SET" && parsed.Count > 2)
+            {
+                store[parsed[1].ToString()] = parsed[2].ToString();
+                msg = System.Text.Encoding.ASCII.GetBytes("+OK\r\n");
+            }
+            else if (parsed[0].ToString() == "GET" && parsed.Count > 1)
+            {
+                if (store.TryGetValue(parsed[1].ToString(), out var value))
+                {
+                    msg = System.Text.Encoding.ASCII.GetBytes(EncodeBulkString(value));
+                }
+                else
+                {
+                    msg = System.Text.Encoding.ASCII.GetBytes("$-1\r\n");
+                }
+            }
+            else
+            {
+                msg = System.Text.Encoding.ASCII.GetBytes("-ERR unknown command\r\n");
             }
 
             stream.Write(msg, 0, msg.Length);
