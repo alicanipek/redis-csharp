@@ -180,13 +180,30 @@ while (true)
             else if (parsed[0].ToString() == "LPOP" && parsed.Count > 1)
             {
                 var key = parsed[1].ToString();
-
+                var count = 0;
                 if (store.TryGetValue(key, out var item) && item.Value is List<string> list)
                 {
-                    var popped = ((List<string>)store[key].Value)[0];
-                    ((List<string>)store[key].Value).RemoveAt(0);
-                    
-                    msg = System.Text.Encoding.ASCII.GetBytes(EncodeBulkString(popped));
+                    if (parsed.Count > 2)
+                    {
+                        count = int.Parse(parsed[2].ToString());
+                        var response = $"*{count}\r\n";
+                        int index = 0;
+                        while (index < count)
+                        {
+                            var popped = ((List<string>)store[key].Value)[0];
+                            ((List<string>)store[key].Value).RemoveAt(0);
+                            response += EncodeBulkString(popped);
+                            index++;
+                        }
+                        msg = System.Text.Encoding.ASCII.GetBytes(response);
+                    }
+                    else
+                    {
+                        var popped = ((List<string>)store[key].Value)[0];
+                        ((List<string>)store[key].Value).RemoveAt(0);
+
+                        msg = System.Text.Encoding.ASCII.GetBytes(EncodeBulkString(popped));
+                    }
                 }
                 else
                 {
