@@ -1,6 +1,6 @@
 
 public class Item
 {
-    public string Value { get; set; }
+    public object Value { get; set; }
     public DateTime? Expiration { get; set; }
 }

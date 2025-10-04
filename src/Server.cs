@@ -70,7 +70,7 @@ while (true)
                     string value = null;
                     if (item.Expiration == null || item.Expiration > DateTime.Now)
                     {
-                        value = item.Value;
+                        value = item.Value.ToString();
                     }
                     else
                     {
@@ -83,6 +83,18 @@ while (true)
                 {
                     msg = System.Text.Encoding.ASCII.GetBytes("$-1\r\n");
                 }
+            }
+            else if (parsed[0].ToString() == "RPUSH" && parsed.Count > 2)
+            {
+                var key = parsed[1].ToString();
+                var value = parsed[2].ToString();
+                if (!store.ContainsKey(key))
+                {
+                    store[key] = new Item { Value = new List<string>(), Expiration = null };
+                
+                }
+                ((List<string>)store[key].Value).Add(value);
+                msg = System.Text.Encoding.ASCII.GetBytes(":" + ((List<string>)store[key].Value).Count + "\r\n");
             }
             else
             {
