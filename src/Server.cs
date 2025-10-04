@@ -177,6 +177,23 @@ while (true)
                     msg = System.Text.Encoding.ASCII.GetBytes(":0\r\n");
                 }
             }
+            else if (parsed[0].ToString() == "LPOP" && parsed.Count > 1)
+            {
+                var key = parsed[1].ToString();
+
+                if (store.TryGetValue(key, out var item) && item.Value is List<string> list)
+                {
+                    var popped = ((List<string>)store[key].Value)[0];
+                    ((List<string>)store[key].Value).RemoveAt(0);
+                    
+                    msg = System.Text.Encoding.ASCII.GetBytes(EncodeBulkString(popped));
+                }
+                else
+                {
+                    msg = System.Text.Encoding.ASCII.GetBytes("$-1\r\n");
+                }
+
+            }
             else
             {
                 msg = System.Text.Encoding.ASCII.GetBytes("-ERR unknown command\r\n");
