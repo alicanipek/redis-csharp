@@ -99,6 +99,49 @@ while (true)
                 }
                 msg = System.Text.Encoding.ASCII.GetBytes(":" + ((List<string>)store[key].Value).Count + "\r\n");
             }
+            else if (parsed[0].ToString() == "LRANGE" && parsed.Count > 3)
+            {
+                var key = parsed[1].ToString();
+                var start = int.Parse(parsed[2].ToString());
+                var stop = int.Parse(parsed[3].ToString());
+
+                if (store.TryGetValue(key, out var item) && item.Value is List<string> list)
+                {
+                    if (item.Expiration != null && item.Expiration <= DateTime.Now)
+                    {
+                        store.Remove(key);
+                        msg = System.Text.Encoding.ASCII.GetBytes("*0\r\n");
+                    }
+                    else
+                    {
+                        // Handle negative indices
+                        if (start < 0) start = list.Count + start;
+                        if (stop < 0) stop = list.Count + stop;
+
+                        // Adjust stop to be inclusive
+                        stop = Math.Min(stop, list.Count - 1);
+
+                        if (start > stop || start >= list.Count)
+                        {
+                            msg = System.Text.Encoding.ASCII.GetBytes("*0\r\n");
+                        }
+                        else
+                        {
+                            var range = list.GetRange(start, stop - start + 1);
+                            var response = $"*{range.Count}\r\n";
+                            foreach (var val in range)
+                            {
+                                response += EncodeBulkString(val);
+                            }
+                            msg = System.Text.Encoding.ASCII.GetBytes(response);
+                        }
+                    }
+                }
+                else
+                {
+                    msg = System.Text.Encoding.ASCII.GetBytes("*0\r\n");
+                }
+            }
             else
             {
                 msg = System.Text.Encoding.ASCII.GetBytes("-ERR unknown command\r\n");
