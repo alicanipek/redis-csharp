@@ -157,6 +157,26 @@ while (true)
                 }
                 msg = System.Text.Encoding.ASCII.GetBytes(":" + ((List<string>)store[key].Value).Count + "\r\n");
             }
+            else if (parsed[0].ToString() == "LLEN" && parsed.Count > 1)
+            {
+                var key = parsed[1].ToString();
+                if (store.TryGetValue(key, out var item) && item.Value is List<string> list)
+                {
+                    if (item.Expiration != null && item.Expiration <= DateTime.Now)
+                    {
+                        store.Remove(key);
+                        msg = System.Text.Encoding.ASCII.GetBytes(":0\r\n");
+                    }
+                    else
+                    {
+                        msg = System.Text.Encoding.ASCII.GetBytes(":" + list.Count + "\r\n");
+                    }
+                }
+                else
+                {
+                    msg = System.Text.Encoding.ASCII.GetBytes(":0\r\n");
+                }
+            }
             else
             {
                 msg = System.Text.Encoding.ASCII.GetBytes("-ERR unknown command\r\n");
