@@ -27,16 +27,17 @@ public class BLPopCommandHandler : ICommandHandler
         }
 
         var key = arguments[1].ToString()!;
-        var timeout = 0;
+        var timeout = 0.0m;
         if (arguments.Count > 2)
         {
-            timeout = int.Parse(arguments[2].ToString()!);
+            timeout = decimal.Parse(arguments[2].ToString()!);
         }
 
-        string? item = _waitableQueue.WaitForItem(timeout == 0 ? Timeout.Infinite : timeout * 1000);
+        string? item = _waitableQueue.WaitForItem(timeout == 0.0m ? Timeout.Infinite : (int)(timeout * 1000));
+        System.Console.WriteLine("BLPOP returned item: " + item);
         if (item == null)
         {
-            return Encoding.ASCII.GetBytes("$-1\r\n");
+            return Encoding.ASCII.GetBytes("*-1\r\n");
         }
         else
         {

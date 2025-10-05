@@ -17,6 +17,7 @@ public class WaitableQueue<T>
 
     public T WaitForItem(int timeoutMilliseconds)
     {
+        System.Console.WriteLine("WaitableQueue waiting for item with timeout: " + timeoutMilliseconds);
         DateTime timeoutTime = timeoutMilliseconds == Timeout.Infinite
         ? DateTime.MaxValue
         : DateTime.UtcNow.AddMilliseconds(timeoutMilliseconds);
@@ -32,6 +33,7 @@ public class WaitableQueue<T>
                     {
                         _itemAddedEvent.Reset();
                     }
+                    System.Console.WriteLine("WaitableQueue returning item: " + item);
                     return item;
                 }
             }
@@ -41,6 +43,7 @@ public class WaitableQueue<T>
                 TimeSpan remainingTime = timeoutTime - DateTime.UtcNow;
                 if (remainingTime <= TimeSpan.Zero)
                 {
+                    System.Console.WriteLine("WaitableQueue timeout expired, returning null");
                     return default(T)!;
                 }
             }
@@ -54,6 +57,7 @@ public class WaitableQueue<T>
                 TimeSpan remainingTime = timeoutTime - DateTime.UtcNow;
                 if (remainingTime <= TimeSpan.Zero)
                 {
+                    System.Console.WriteLine("WaitableQueue timeout expired, returning null");
                     return default(T)!;
                 }
 

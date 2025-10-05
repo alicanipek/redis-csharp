@@ -38,6 +38,7 @@ public class RedisServer
                 // Loop to receive all the data sent by the client.
                 while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
                 {
+                    System.Console.WriteLine("Received request at time: " + DateTime.Now.ToString("hh:mm:ss.fff"));
                     string request = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
                     byte[] response = _commandProcessor.ProcessCommand(request);
                     stream.Write(response, 0, response.Length);
