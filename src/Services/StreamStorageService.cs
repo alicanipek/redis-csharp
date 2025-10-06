@@ -2,60 +2,128 @@ using System;
 
 namespace codecrafters_redis.src.Services;
 
+public record StreamId(long Milliseconds, int Sequence)
+{
+    private const string MinId = "0-0";
+    private const string AutoSequence = "*";
+
+    public static StreamId Parse(string id)
+    {
+        var parts = id.Split('-');
+        if (parts.Length != 2 || 
+            !long.TryParse(parts[0], out var ms) || 
+            !int.TryParse(parts[1], out var seq))
+        {
+            throw new ArgumentException("Invalid ID format");
+        }
+        return new StreamId(ms, seq);
+    }
+
+    public static bool IsAutoSequence(string id) => 
+        id.Split('-') is var parts && parts.Length == 2 && parts[1] == AutoSequence;
+
+    public static bool IsMinimumId(string id) => id == MinId;
+
+    public bool IsGreaterThan(StreamId other) =>
+        Milliseconds > other.Milliseconds || 
+        (Milliseconds == other.Milliseconds && Sequence > other.Sequence);
+
+    public override string ToString() => $"{Milliseconds}-{Sequence}";
+}
+
 public class Stream
 {
-    public string Id { get; set; }
-    public Dictionary<string, string> Fields { get; set; }
+    public required StreamId Id { get; set; }
+    public required Dictionary<string, string> Fields { get; set; }
 }
 
 public class StreamStorageService
 {
     private readonly Dictionary<string, List<Stream>> _streams = new();
 
-    public Task AddEntryAsync(string key, string id, Dictionary<string, string> fields)
+    public Task<string> AddEntryAsync(string key, string id, Dictionary<string, string> fields)
     {
-        if (!_streams.ContainsKey(key))
+        // Validate minimum ID
+        if (StreamId.IsMinimumId(id))
         {
-            _streams[key] = new List<Stream>();
+            throw new ArgumentException("The ID specified in XADD must be greater than 0-0");
         }
 
-        ValidateId(id, _streams[key].Count > 0 ? _streams[key].Last().Id : "0-0");
+        EnsureStreamExists(key);
 
-        var entry = new Stream
+        // Resolve ID (handle auto-sequence)
+        StreamId finalId;
+        if (StreamId.IsAutoSequence(id))
         {
-            Id = id,
-            Fields = fields
-        };
+            var parts = id.Split('-');
+            var milliseconds = long.Parse(parts[0]);
+            
+            finalId = milliseconds == 0 
+                ? new StreamId(0, 1)
+                : GenerateNextSequence(milliseconds, _streams[key]);
+        }
+        else
+        {
+            finalId = StreamId.Parse(id);
+        }
+
+        return AddEntryAsync(key, finalId, fields);
+    }
+
+    public Task<string> AddEntryAsync(string key, StreamId id, Dictionary<string, string> fields)
+    {
+        EnsureStreamExists(key);
+        ValidateIdIsGreaterThanLast(id, _streams[key]);
+
+        var entry = new Stream { Id = id, Fields = fields };
         _streams[key].Add(entry);
-        return Task.CompletedTask;
+
+        return Task.FromResult(id.ToString());
     }
 
-    private void ValidateId(string id, string v)
+    private void EnsureStreamExists(string key)
     {
-        if (id == "0-0")
-        {
-            throw new ArgumentException($"The ID specified in XADD must be greater than 0-0");
-        }
-        var parts = id.Split('-');
-        if (parts.Length != 2 || !long.TryParse(parts[0], out var ms) || !int.TryParse(parts[1], out var seq))
-        {
-            throw new ArgumentException("Invalid ID format");
-        }
-        var lastParts = v.Split('-');
-        var lastMs = long.Parse(lastParts[0]);
-        var lastSeq = int.Parse(lastParts[1]);
+        _streams.TryAdd(key, new List<Stream>());
+    }
 
-        if (ms < lastMs || (ms == lastMs && seq <= lastSeq))
+    private static StreamId GenerateNextSequence(long milliseconds, List<Stream> streams)
+    {
+        var sequence = streams
+            .Where(s => s.Id.Milliseconds == milliseconds)
+            .Select(s => s.Id.Sequence)
+            .DefaultIfEmpty(-1)
+            .Max() + 1;
+
+        return new StreamId(milliseconds, sequence);
+    }
+
+    private static void ValidateIdIsGreaterThanLast(StreamId id, List<Stream> streams)
+    {
+        if (streams.Count == 0) return;
+
+        var lastId = streams.Last().Id;
+
+        if (!id.IsGreaterThan(lastId))
         {
-            var error = v == "0-0" ? $"must be greater than {v}" : "is equal or smaller than the target stream top item";
-            throw new ArgumentException($"The ID specified in XADD {error}");
+            var errorMessage = lastId.ToString() == "0-0" 
+                ? $"must be greater than {lastId}"
+                : "is equal or smaller than the target stream top item";
+            
+            throw new ArgumentException($"The ID specified in XADD {errorMessage}");
         }
     }
 
-    public Task AddEntryAsync(string key, Dictionary<string, string> fields)
+    public Task<string> AddEntryAsync(string key, Dictionary<string, string> fields)
     {
-        var id = $"{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}-0";
+        var id = new StreamId(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), 0);
         return AddEntryAsync(key, id, fields);
+    }
+
+    public Task<StreamId> ResolveAutoSequenceId(string key, long milliseconds)
+    {
+        EnsureStreamExists(key);
+        var result = GenerateNextSequence(milliseconds, _streams[key]);
+        return Task.FromResult(result);
     }
 
     public Task<List<Stream>?> GetEntriesAsync(string key)

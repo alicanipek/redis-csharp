@@ -40,8 +40,7 @@ public class XAddCommandHandler : ICommandHandler
         }
         try
         {
-
-            await _streamStorageService.AddEntryAsync(key, id, fields);
+            id = await _streamStorageService.AddEntryAsync(key, id, fields);
         }
         catch (ArgumentException ex)
         {
