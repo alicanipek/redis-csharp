@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using codecrafters_redis.Infrastructure;
 using codecrafters_redis.Services;
 using codecrafters_redis.CommandHandlers;
+using codecrafters_redis.src.CommandHandlers;
 
 class Program
 {
@@ -31,6 +32,7 @@ class Program
         services.AddSingleton<ICommandHandler, LLenCommandHandler>();
         services.AddSingleton<ICommandHandler, LPopCommandHandler>();
         services.AddSingleton<ICommandHandler, BLPopCommandHandler>();
+        services.AddSingleton<ICommandHandler, TypeCommandHandler>();
 
         // Register server
         services.AddSingleton<RedisServer>();
