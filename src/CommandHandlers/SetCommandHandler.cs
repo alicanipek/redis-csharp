@@ -17,7 +17,7 @@ public class SetCommandHandler : ICommandHandler
         _respParser = respParser;
     }
 
-    public byte[] Handle(List<object> arguments)
+    public async Task<byte[]> HandleAsync(List<object> arguments)
     {
         if (arguments.Count < 3)
         {
@@ -33,7 +33,7 @@ public class SetCommandHandler : ICommandHandler
             expirationMs = int.Parse(arguments[4].ToString()!);
         }
 
-        _storageService.Set(key, value, expirationMs);
+        await _storageService.SetAsync(key, value, expirationMs);
         return Encoding.ASCII.GetBytes("+OK\r\n");
     }
 }

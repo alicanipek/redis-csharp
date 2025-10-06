@@ -17,7 +17,7 @@ public class GetCommandHandler : ICommandHandler
         _respParser = respParser;
     }
 
-    public byte[] Handle(List<object> arguments)
+    public async Task<byte[]> HandleAsync(List<object> arguments)
     {
         if (arguments.Count < 2)
         {
@@ -25,7 +25,7 @@ public class GetCommandHandler : ICommandHandler
         }
 
         var key = arguments[1].ToString()!;
-        var value = _storageService.Get(key);
+        var value = await _storageService.GetAsync(key);
         
         return Encoding.ASCII.GetBytes(_respParser.EncodeBulkString(value));
     }

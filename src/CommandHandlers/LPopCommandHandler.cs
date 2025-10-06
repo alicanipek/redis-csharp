@@ -17,7 +17,7 @@ public class LPopCommandHandler : ICommandHandler
         _respParser = respParser;
     }
 
-    public byte[] Handle(List<object> arguments)
+    public async Task<byte[]> HandleAsync(List<object> arguments)
     {
         if (arguments.Count < 2)
         {
@@ -29,7 +29,7 @@ public class LPopCommandHandler : ICommandHandler
         if (arguments.Count > 2)
         {
             var count = int.Parse(arguments[2].ToString()!);
-            var poppedItems = _listService.LPop(key, count);
+            var poppedItems = await _listService.LPopAsync(key, count);
             
             var response = $"*{poppedItems.Count}\r\n";
             foreach (var item in poppedItems)
@@ -40,7 +40,7 @@ public class LPopCommandHandler : ICommandHandler
         }
         else
         {
-            var popped = _listService.LPop(key);
+            var popped = await _listService.LPopAsync(key);
             return Encoding.ASCII.GetBytes(_respParser.EncodeBulkString(popped));
         }
     }

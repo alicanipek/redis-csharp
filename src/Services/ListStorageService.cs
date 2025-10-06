@@ -4,92 +4,85 @@ namespace codecrafters_redis.Services;
 
 public class ListStorageService
 {
-    private readonly ConcurrentDictionary<string, List<string>> _listStore = new();
+    private readonly ConcurrentDictionary<string, BlockingList> _listStore = new();
 
-    public int RPush(string key, IEnumerable<string> values)
+    public async Task<int> RPushAsync(string key, IEnumerable<string> values)
     {
-        var list = _listStore.GetOrAdd(key, _ => new List<string>());
-        foreach (var value in values)
-        {
-            list.Add(value);
-        }
-        return list.Count;
+        var list = _listStore.GetOrAdd(key, _ => new BlockingList());
+        await list.RPushAsync(values.ToArray());
+        return list._items.Count;
     }
 
-    public int LPush(string key, IEnumerable<string> values)
+    public async Task<string?> BLPopAsync(string key, int timeout)
     {
-        var list = _listStore.GetOrAdd(key, _ => new List<string>());
-        foreach (var value in values)
-        {
-            list.Insert(0, value);
-        }
-        return list.Count;
+        var list = _listStore.GetOrAdd(key, _ => new BlockingList());
+        var result = await list.BLPopAsync(key, timeout);
+        return result;
     }
 
-    public List<string> LRange(string key, int start, int stop)
+    public async Task<int> LPushAsync(string key, IEnumerable<string> values)
+    {
+        var list = _listStore.GetOrAdd(key, _ => new BlockingList());
+        await list.LPushAsync(values.ToArray());
+        return list._items.Count;
+    }
+
+    public Task<List<string>> LRangeAsync(string key, int start, int stop)
     {
         if (!_listStore.TryGetValue(key, out var list))
         {
-            return new List<string>();
+            return Task.FromResult(new List<string>());
         }
 
         // Handle negative indices
-        if (start < 0) start = list.Count + start < 0 ? 0 : list.Count + start;
-        if (stop < 0) stop = list.Count + stop < 0 ? 0 : list.Count + stop;
+        if (start < 0) start = list._items.Count + start < 0 ? 0 : list._items.Count + start;
+        if (stop < 0) stop = list._items.Count + stop < 0 ? 0 : list._items.Count + stop;
 
         // Adjust stop to be inclusive
-        stop = Math.Min(stop, list.Count - 1);
+        stop = Math.Min(stop, list._items.Count - 1);
 
-        if (start > stop || start >= list.Count)
+        if (start > stop || start >= list._items.Count)
         {
-            return new List<string>();
+            return Task.FromResult(new List<string>());
         }
 
-        return list.GetRange(start, stop - start + 1);
+        return Task.FromResult(list._items.GetRange(start, stop - start + 1));
     }
 
-    public int LLen(string key)
+    public Task<int> LLenAsync(string key)
     {
-        return _listStore.TryGetValue(key, out var list) ? list.Count : 0;
+        var result = _listStore.TryGetValue(key, out var list) ? list._items.Count : 0;
+        return Task.FromResult(result);
     }
 
-    public string? LPop(string key)
+    public Task<string?> LPopAsync(string key)
     {
-        if (!_listStore.TryGetValue(key, out var list) || list.Count == 0)
+        if (!_listStore.TryGetValue(key, out var list) || list._items.Count == 0)
         {
-            return null;
+            return Task.FromResult<string?>(null);
         }
 
-        var popped = list[0];
-        list.RemoveAt(0);
-        return popped;
+        var popped = list._items[0];
+        list._items.RemoveAt(0);
+        return Task.FromResult<string?>(popped);
     }
 
-    public List<string> LPop(string key, int count)
+    public Task<List<string>> LPopAsync(string key, int count)
     {
         var result = new List<string>();
         if (!_listStore.TryGetValue(key, out var list))
         {
-            return result;
+            return Task.FromResult(result);
         }
 
         int index = 0;
-        while (index < count && list.Count > 0)
+        while (index < count && list._items.Count > 0)
         {
-            var popped = list[0];
-            list.RemoveAt(0);
+            var popped = list._items[0];
+            list._items.RemoveAt(0);
             result.Add(popped);
             index++;
         }
-        return result;
-    }
-
-    public bool RemoveItem(string key, string item)
-    {
-        if (_listStore.TryGetValue(key, out var list))
-        {
-            return list.Remove(item);
-        }
-        return false;
+        return Task.FromResult(result);
     }
 }

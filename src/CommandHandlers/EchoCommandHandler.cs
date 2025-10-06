@@ -14,12 +14,12 @@ public class EchoCommandHandler : ICommandHandler
         _respParser = respParser;
     }
 
-    public byte[] Handle(List<object> arguments)
+    public Task<byte[]> HandleAsync(List<object> arguments)
     {
         if (arguments.Count > 1)
         {
-            return Encoding.ASCII.GetBytes(_respParser.EncodeBulkString(arguments[1].ToString()!));
+            return Task.FromResult(Encoding.ASCII.GetBytes(_respParser.EncodeBulkString(arguments[1].ToString()!)));
         }
-        return Encoding.ASCII.GetBytes("-ERR wrong number of arguments\r\n");
+        return Task.FromResult(Encoding.ASCII.GetBytes("-ERR wrong number of arguments\r\n"));
     }
 }

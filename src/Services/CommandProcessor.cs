@@ -15,7 +15,7 @@ public class CommandProcessor
         _handlers = commandHandlers.ToDictionary(h => h.CommandName, h => h);
     }
 
-    public byte[] ProcessCommand(string request)
+    public async Task<byte[]> ProcessCommandAsync(string request)
     {
         var parsed = _respParser.ParseRespArray(request);
         if (parsed.Count == 0)
@@ -31,7 +31,7 @@ public class CommandProcessor
 
         if (_handlers.TryGetValue(commandName, out var handler))
         {
-            return handler.Handle(parsed);
+            return await handler.HandleAsync(parsed);
         }
 
         return Encoding.ASCII.GetBytes("-ERR unknown command\r\n");

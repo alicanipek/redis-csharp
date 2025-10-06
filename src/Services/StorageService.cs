@@ -7,7 +7,7 @@ public class StorageService
 {
     private readonly ConcurrentDictionary<string, Item> _store = new();
 
-    public void Set(string key, string value, int? expirationMs = null)
+    public Task SetAsync(string key, string value, int? expirationMs = null)
     {
         var item = new Item
         {
@@ -15,22 +15,23 @@ public class StorageService
             Expiration = expirationMs.HasValue ? DateTime.Now.AddMilliseconds(expirationMs.Value) : null
         };
         _store[key] = item;
+        return Task.CompletedTask;
     }
 
-    public string? Get(string key)
+    public Task<string?> GetAsync(string key)
     {
         if (_store.TryGetValue(key, out var item))
         {
             if (item.Expiration == null || item.Expiration > DateTime.Now)
             {
-                return item.Value;
+                return Task.FromResult<string?>(item.Value);
             }
             else
             {
                 _ = _store.TryRemove(key, out var _);
-                return null;
+                return Task.FromResult<string?>(null);
             }
         }
-        return null;
+        return Task.FromResult<string?>(null);
     }
 }

@@ -17,7 +17,7 @@ public class LLenCommandHandler : ICommandHandler
         _respParser = respParser;
     }
 
-    public byte[] Handle(List<object> arguments)
+    public async Task<byte[]> HandleAsync(List<object> arguments)
     {
         if (arguments.Count < 2)
         {
@@ -25,7 +25,7 @@ public class LLenCommandHandler : ICommandHandler
         }
 
         var key = arguments[1].ToString()!;
-        var count = _listService.LLen(key);
+        var count = await _listService.LLenAsync(key);
         
         return Encoding.ASCII.GetBytes($":{count}\r\n");
     }

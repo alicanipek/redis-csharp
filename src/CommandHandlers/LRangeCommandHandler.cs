@@ -17,7 +17,7 @@ public class LRangeCommandHandler : ICommandHandler
         _respParser = respParser;
     }
 
-    public byte[] Handle(List<object> arguments)
+    public async Task<byte[]> HandleAsync(List<object> arguments)
     {
         if (arguments.Count < 4)
         {
@@ -28,7 +28,7 @@ public class LRangeCommandHandler : ICommandHandler
         var start = int.Parse(arguments[2].ToString()!);
         var stop = int.Parse(arguments[3].ToString()!);
 
-        var range = _listService.LRange(key, start, stop);
+        var range = await _listService.LRangeAsync(key, start, stop);
         
         var response = $"*{range.Count}\r\n";
         foreach (var val in range)

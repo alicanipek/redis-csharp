@@ -14,8 +14,8 @@ public class PingCommandHandler : ICommandHandler
         _respParser = respParser;
     }
 
-    public byte[] Handle(List<object> arguments)
+    public Task<byte[]> HandleAsync(List<object> arguments)
     {
-        return Encoding.ASCII.GetBytes("+PONG\r\n");
+        return Task.FromResult(Encoding.ASCII.GetBytes("+PONG\r\n"));
     }
 }

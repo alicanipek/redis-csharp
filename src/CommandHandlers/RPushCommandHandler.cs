@@ -7,19 +7,15 @@ namespace codecrafters_redis.CommandHandlers;
 public class RPushCommandHandler : ICommandHandler
 {
     private readonly ListStorageService _listService;
-    private readonly WaitableQueue<string> _waitableQueue;
-    private readonly RespParser _respParser;
 
     public string CommandName => "RPUSH";
 
-    public RPushCommandHandler(ListStorageService listService, WaitableQueue<string> waitableQueue, RespParser respParser)
+    public RPushCommandHandler(ListStorageService listService)
     {
         _listService = listService;
-        _waitableQueue = waitableQueue;
-        _respParser = respParser;
     }
 
-    public byte[] Handle(List<object> arguments)
+    public async Task<byte[]> HandleAsync(List<object> arguments)
     {
         if (arguments.Count < 3)
         {
@@ -29,8 +25,7 @@ public class RPushCommandHandler : ICommandHandler
         var key = arguments[1].ToString()!;
         var values = arguments.Skip(2).Select(v => v.ToString()!).ToList();
 
-        var count = _listService.RPush(key, values);
-        _waitableQueue.Enqueue(values[0]);
+        var count = await _listService.RPushAsync(key, values);
         
         return Encoding.ASCII.GetBytes($":{count}\r\n");
     }
