@@ -10,8 +10,8 @@ public record StreamId(long Milliseconds, int Sequence)
     public static StreamId Parse(string id)
     {
         var parts = id.Split('-');
-        if (parts.Length != 2 || 
-            !long.TryParse(parts[0], out var ms) || 
+        if (parts.Length != 2 ||
+            !long.TryParse(parts[0], out var ms) ||
             !int.TryParse(parts[1], out var seq))
         {
             throw new ArgumentException("Invalid ID format");
@@ -27,10 +27,21 @@ public record StreamId(long Milliseconds, int Sequence)
 
     public static bool IsMinimumId(string id) => id == MinId;
 
-    public bool IsGreaterThan(StreamId other) =>
-        Milliseconds > other.Milliseconds || 
-        (Milliseconds == other.Milliseconds && Sequence > other.Sequence);
+    public static bool operator <(StreamId left, StreamId right) =>
+        left.Milliseconds < right.Milliseconds ||
+        (left.Milliseconds == right.Milliseconds && left.Sequence < right.Sequence);
 
+    public static bool operator >(StreamId left, StreamId right) =>
+        left.Milliseconds > right.Milliseconds ||
+        (left.Milliseconds == right.Milliseconds && left.Sequence > right.Sequence);
+
+    public static bool operator <=(StreamId left, StreamId right) =>
+        left.Milliseconds < right.Milliseconds ||
+        (left.Milliseconds == right.Milliseconds && left.Sequence <= right.Sequence);
+
+    public static bool operator >=(StreamId left, StreamId right) =>
+        left.Milliseconds > right.Milliseconds ||
+        (left.Milliseconds == right.Milliseconds && left.Sequence >= right.Sequence);
     public override string ToString() => $"{Milliseconds}-{Sequence}";
 }
 
@@ -110,12 +121,12 @@ public class StreamStorageService
 
         var lastId = streams.Last().Id;
 
-        if (!id.IsGreaterThan(lastId))
+        if (!(id > lastId))
         {
-            var errorMessage = lastId.ToString() == "0-0" 
+            var errorMessage = lastId.ToString() == "0-0"
                 ? $"must be greater than {lastId}"
                 : "is equal or smaller than the target stream top item";
-            
+
             throw new ArgumentException($"The ID specified in XADD {errorMessage}");
         }
     }
@@ -142,4 +153,28 @@ public class StreamStorageService
         return Task.FromResult<List<Stream>?>(null);
     }
 
+    public async Task<List<Stream>?> GetRangeAsync(string key, string start, string end)
+    {
+        EnsureStreamExists(key);
+
+        if (start.Split('-').Length < 2)
+        {
+            start = $"{start}-0";
+        }
+
+        if (end.Split('-').Length < 2)
+        {
+            var lastId = _streams[key].Where(id => id.Id.Milliseconds == long.Parse(end)).Last().Id;
+            end = $"{end}-{lastId.Sequence}";
+        }
+
+        var startId = StreamId.Parse(start);
+        var endId = StreamId.Parse(end);
+
+        var result = _streams[key]
+            .Where(s => s.Id >= startId && s.Id <= endId)
+            .ToList();
+
+        return await Task.FromResult(result);
+    }
 }
