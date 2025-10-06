@@ -38,8 +38,15 @@ public class XAddCommandHandler : ICommandHandler
             var value = arguments[i + 1].ToString()!;
             fields[field] = value;
         }
+        try
+        {
 
-        await _streamStorageService.AddEntryAsync(key, id, fields);
+            await _streamStorageService.AddEntryAsync(key, id, fields);
+        }
+        catch (ArgumentException ex)
+        {
+            return Encoding.ASCII.GetBytes($"-ERR {ex.Message}\r\n");
+        }
 
         return Encoding.ASCII.GetBytes(_respParser.EncodeBulkString(id));
 
