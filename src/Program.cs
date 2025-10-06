@@ -3,6 +3,7 @@ using codecrafters_redis.Infrastructure;
 using codecrafters_redis.Services;
 using codecrafters_redis.CommandHandlers;
 using codecrafters_redis.src.CommandHandlers;
+using codecrafters_redis.src.Services;
 
 class Program
 {
@@ -20,6 +21,7 @@ class Program
         // Register business services
         services.AddSingleton<StorageService>();
         services.AddSingleton<ListStorageService>();
+        services.AddSingleton<StreamStorageService>();
         services.AddSingleton<CommandProcessor>();
         // Register command handlers
         services.AddSingleton<ICommandHandler, PingCommandHandler>();
@@ -33,6 +35,7 @@ class Program
         services.AddSingleton<ICommandHandler, LPopCommandHandler>();
         services.AddSingleton<ICommandHandler, BLPopCommandHandler>();
         services.AddSingleton<ICommandHandler, TypeCommandHandler>();
+        services.AddSingleton<ICommandHandler, XAddCommandHandler>();
 
         // Register server
         services.AddSingleton<RedisServer>();
