@@ -162,9 +162,15 @@ public class StreamStorageService
             result = _streams[key]
                 .Where(s => s.Id <= StreamId.Parse(end))
                 .ToList();
-            return await Task.FromResult(result);
+            return result;
         }
-
+        if (end == "+")
+        {
+            result = _streams[key]
+                .Where(s => s.Id >= StreamId.Parse(start))
+                .ToList();
+            return result;
+        }
         if (start.Split('-').Length < 2)
         {
             start = $"{start}-0";
