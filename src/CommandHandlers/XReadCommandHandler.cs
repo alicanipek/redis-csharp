@@ -21,30 +21,47 @@ public class XReadCommandHandler : ICommandHandler
             return System.Text.Encoding.ASCII.GetBytes("-ERR wrong number of arguments\r\n");
         }
 
-        var key = arguments[2].ToString()!;
-        var id = arguments[3].ToString()!;
-
-        var entries = await _streamStorageService.GetRangeAsync(key, id);
-
-        if (entries == null || entries.Count == 0)
+        List<string> keys = new();
+        List<string> ids = new();
+        int i = 2;
+        while (i < arguments.Count && arguments[i].ToString()!.ToUpper() != "STREAMS")
         {
-            return System.Text.Encoding.ASCII.GetBytes("*0\r\n");
+            if (StreamId.TryParse(arguments[i].ToString()!))
+            {
+                ids.Add(arguments[i].ToString()!);
+            }
+            else
+            {
+                keys.Add(arguments[i].ToString()!);
+            }
+            i++;
         }
 
         var response = new System.Text.StringBuilder();
-        response.Append($"*1\r\n");
-        response.Append($"*2\r\n");
-        response.Append($"${key.Length}\r\n{key}\r\n");
-        response.Append($"*1\r\n");
-        foreach (var entry in entries)
+        response.Append($"*{keys.Count}\r\n");
+
+        for (int j = 0; j < keys.Count; j++)
         {
-            response.Append($"*2\r\n${entry.Id.ToString().Length}\r\n{entry.Id}\r\n*{entry.Fields.Count * 2}\r\n");
-            foreach (var field in entry.Fields)
+            var entries = await _streamStorageService.GetRangeAsync(keys[j], ids[j]);
+
+            if (entries == null || entries.Count == 0)
             {
-                response.Append($"${field.Key.Length}\r\n{field.Key}\r\n${field.Value.Length}\r\n{field.Value}\r\n");
+                return System.Text.Encoding.ASCII.GetBytes("*0\r\n");
+            }
+
+            response.Append($"*2\r\n");
+            response.Append($"${keys[j].Length}\r\n{keys[j]}\r\n");
+            response.Append($"*{entries.Count}\r\n");
+            foreach (var entry in entries)
+            {
+                response.Append($"*2\r\n${entry.Id.ToString().Length}\r\n{entry.Id}\r\n*{entry.Fields.Count * 2}\r\n");
+                foreach (var field in entry.Fields)
+                {
+                    response.Append($"${field.Key.Length}\r\n{field.Key}\r\n${field.Value.Length}\r\n{field.Value}\r\n");
+                }
             }
         }
-        System.Console.WriteLine(response.ToString());
+
         return System.Text.Encoding.ASCII.GetBytes(response.ToString());
     }
 }

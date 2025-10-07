@@ -7,6 +7,15 @@ public record StreamId(long Milliseconds, int Sequence)
     private const string MinId = "0-0";
     private const string AutoSymbol = "*";
 
+    public static bool TryParse(string id)
+    {
+        var parts = id.Split('-');
+        return parts.Length == 2 &&
+               long.TryParse(parts[0], out var ms) &&
+               int.TryParse(parts[1], out var seq) &&
+               ms >= 0 && seq >= 0;
+    }
+
     public static StreamId Parse(string id)
     {
         var parts = id.Split('-');
