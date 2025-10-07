@@ -37,6 +37,7 @@ class Program
         services.AddSingleton<ICommandHandler, TypeCommandHandler>();
         services.AddSingleton<ICommandHandler, XAddCommandHandler>();
         services.AddSingleton<ICommandHandler, XRangeCommandHandler>();
+        services.AddSingleton<ICommandHandler, XReadCommandHandler>();
 
         // Register server
         services.AddSingleton<RedisServer>();

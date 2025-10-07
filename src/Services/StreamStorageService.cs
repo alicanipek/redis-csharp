@@ -14,6 +14,7 @@ public record StreamId(long Milliseconds, int Sequence)
             !long.TryParse(parts[0], out var ms) ||
             !int.TryParse(parts[1], out var seq))
         {
+            System.Console.WriteLine($"Invalid ID format: {id}");
             throw new ArgumentException("Invalid ID format");
         }
         return new StreamId(ms, seq);
@@ -151,6 +152,29 @@ public class StreamStorageService
             return Task.FromResult<List<Stream>?>(entries);
         }
         return Task.FromResult<List<Stream>?>(null);
+    }
+
+    public async Task<List<Stream>?> GetRangeAsync(string key, string id)
+    {
+        EnsureStreamExists(key);
+        if (id == "-")
+        {
+            return _streams[key];
+        }
+        if (id == "+")
+        {
+            return new List<Stream>();
+        }
+        if (id.Split('-').Length < 2)
+        {
+            id = $"{id}-0";
+        }
+        var startId = StreamId.Parse(id);
+        var result = _streams[key]
+            .Where(s => s.Id > startId)
+            .ToList();
+
+        return await Task.FromResult(result);
     }
 
     public async Task<List<Stream>?> GetRangeAsync(string key, string start, string end)

@@ -1,0 +1,50 @@
+using System;
+using codecrafters_redis.CommandHandlers;
+using codecrafters_redis.src.Services;
+
+namespace codecrafters_redis.src.CommandHandlers;
+
+public class XReadCommandHandler : ICommandHandler
+{
+    public string CommandName => "XREAD";
+
+    public StreamStorageService _streamStorageService;
+    public XReadCommandHandler(StreamStorageService streamStorageService)
+    {
+        _streamStorageService = streamStorageService;
+    }
+
+    public async Task<byte[]> HandleAsync(List<object> arguments)
+    {
+        if (arguments.Count < 4)
+        {
+            return System.Text.Encoding.ASCII.GetBytes("-ERR wrong number of arguments\r\n");
+        }
+
+        var key = arguments[2].ToString()!;
+        var id = arguments[3].ToString()!;
+
+        var entries = await _streamStorageService.GetRangeAsync(key, id);
+
+        if (entries == null || entries.Count == 0)
+        {
+            return System.Text.Encoding.ASCII.GetBytes("*0\r\n");
+        }
+
+        var response = new System.Text.StringBuilder();
+        response.Append($"*1\r\n");
+        response.Append($"*2\r\n");
+        response.Append($"${key.Length}\r\n{key}\r\n");
+        response.Append($"*1\r\n");
+        foreach (var entry in entries)
+        {
+            response.Append($"*2\r\n${entry.Id.ToString().Length}\r\n{entry.Id}\r\n*{entry.Fields.Count * 2}\r\n");
+            foreach (var field in entry.Fields)
+            {
+                response.Append($"${field.Key.Length}\r\n{field.Key}\r\n${field.Value.Length}\r\n{field.Value}\r\n");
+            }
+        }
+        System.Console.WriteLine(response.ToString());
+        return System.Text.Encoding.ASCII.GetBytes(response.ToString());
+    }
+}
