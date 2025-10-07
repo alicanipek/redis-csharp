@@ -4,6 +4,7 @@ using codecrafters_redis.Services;
 using codecrafters_redis.CommandHandlers;
 using codecrafters_redis.src.CommandHandlers;
 using codecrafters_redis.src.Services;
+using System.Reflection;
 
 class Program
 {
@@ -23,21 +24,9 @@ class Program
         services.AddSingleton<ListStorageService>();
         services.AddSingleton<StreamStorageService>();
         services.AddSingleton<CommandProcessor>();
-        // Register command handlers
-        services.AddSingleton<ICommandHandler, PingCommandHandler>();
-        services.AddSingleton<ICommandHandler, EchoCommandHandler>();
-        services.AddSingleton<ICommandHandler, SetCommandHandler>();
-        services.AddSingleton<ICommandHandler, GetCommandHandler>();
-        services.AddSingleton<ICommandHandler, RPushCommandHandler>();
-        services.AddSingleton<ICommandHandler, LPushCommandHandler>();
-        services.AddSingleton<ICommandHandler, LRangeCommandHandler>();
-        services.AddSingleton<ICommandHandler, LLenCommandHandler>();
-        services.AddSingleton<ICommandHandler, LPopCommandHandler>();
-        services.AddSingleton<ICommandHandler, BLPopCommandHandler>();
-        services.AddSingleton<ICommandHandler, TypeCommandHandler>();
-        services.AddSingleton<ICommandHandler, XAddCommandHandler>();
-        services.AddSingleton<ICommandHandler, XRangeCommandHandler>();
-        services.AddSingleton<ICommandHandler, XReadCommandHandler>();
+
+        // Register command handlers automatically using reflection
+        RegisterCommandHandlers(services);
 
         // Register server
         services.AddSingleton<RedisServer>();
@@ -48,5 +37,34 @@ class Program
         // Get the server and start it
         var server = serviceProvider.GetRequiredService<RedisServer>();
         await server.StartAsync();
+    }
+
+    private static void RegisterCommandHandlers(IServiceCollection services)
+    {
+        try
+        {
+            // Get the current assembly
+            var assembly = Assembly.GetExecutingAssembly();
+
+            // Find all types that implement ICommandHandler and are not interfaces or abstract classes
+            var handlerTypes = assembly.GetTypes()
+                .Where(type => typeof(ICommandHandler).IsAssignableFrom(type) &&
+                              !type.IsInterface &&
+                              !type.IsAbstract &&
+                              type.GetConstructors().Length != 0) // Ensure type has at least one constructor
+                .ToList();
+
+            // Register each handler as a singleton
+            foreach (var handlerType in handlerTypes)
+            {
+                services.AddSingleton(typeof(ICommandHandler), handlerType);
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during automatic command handler registration: {ex.Message}");
+            throw;
+        }
     }
 }

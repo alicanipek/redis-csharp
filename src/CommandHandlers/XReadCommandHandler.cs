@@ -1,5 +1,6 @@
 using System;
 using codecrafters_redis.CommandHandlers;
+using codecrafters_redis.src.Models;
 using codecrafters_redis.src.Services;
 
 namespace codecrafters_redis.src.CommandHandlers;
@@ -20,12 +21,20 @@ public class XReadCommandHandler : ICommandHandler
         {
             return System.Text.Encoding.ASCII.GetBytes("-ERR wrong number of arguments\r\n");
         }
+        var timeoutms = 0.0m;
+        int i = 1;
+        if (arguments.Count > 2 && arguments[1].ToString()!.ToUpper() == "BLOCK")
+        {
+            timeoutms = decimal.Parse(arguments[2].ToString()!);
+            i += 2;
+        }
 
         List<string> keys = new();
         List<string> ids = new();
-        int i = 2;
-        while (i < arguments.Count && arguments[i].ToString()!.ToUpper() != "STREAMS")
+        
+        while (i < arguments.Count)
         {
+            if (arguments[i].ToString()!.ToUpper() == "STREAMS") { i++; continue; }
             if (StreamId.TryParse(arguments[i].ToString()!))
             {
                 ids.Add(arguments[i].ToString()!);
@@ -38,17 +47,22 @@ public class XReadCommandHandler : ICommandHandler
         }
 
         var response = new System.Text.StringBuilder();
+
         response.Append($"*{keys.Count}\r\n");
 
         for (int j = 0; j < keys.Count; j++)
         {
-            var entries = await _streamStorageService.GetRangeAsync(keys[j], ids[j]);
+            var entries = await _streamStorageService.GetRangeAsync(keys[j], ids[j], (int)timeoutms);
 
-            if (entries == null || entries.Count == 0)
+            if (entries == null)
+            {
+                return System.Text.Encoding.ASCII.GetBytes("*-1\r\n");
+            }
+
+            if (entries.Count == 0)
             {
                 return System.Text.Encoding.ASCII.GetBytes("*0\r\n");
             }
-
             response.Append($"*2\r\n");
             response.Append($"${keys[j].Length}\r\n{keys[j]}\r\n");
             response.Append($"*{entries.Count}\r\n");
