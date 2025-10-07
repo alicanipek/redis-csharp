@@ -156,6 +156,14 @@ public class StreamStorageService
     public async Task<List<Stream>?> GetRangeAsync(string key, string start, string end)
     {
         EnsureStreamExists(key);
+        List<Stream>? result;
+        if (start == "-")
+        {
+            result = _streams[key]
+                .Where(s => s.Id <= StreamId.Parse(end))
+                .ToList();
+            return await Task.FromResult(result);
+        }
 
         if (start.Split('-').Length < 2)
         {
@@ -171,7 +179,7 @@ public class StreamStorageService
         var startId = StreamId.Parse(start);
         var endId = StreamId.Parse(end);
 
-        var result = _streams[key]
+        result = _streams[key]
             .Where(s => s.Id >= startId && s.Id <= endId)
             .ToList();
 
