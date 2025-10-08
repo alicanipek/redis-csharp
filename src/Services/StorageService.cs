@@ -37,12 +37,17 @@ public class StorageService
 
     internal async Task<int> IncrementKeyAsync(string key)
     {
-        var value = await GetAsync(key) ?? throw new FormatException();
-        if (!int.TryParse(value, out var intValue))
+        var value = await GetAsync(key);
+        int intValue;
+
+        if (value == null)
+        {
+            intValue = 0;
+        }
+        else if (!int.TryParse(value, out intValue))
         {
             throw new FormatException();
         }
-
         intValue++;
         await SetAsync(key, intValue.ToString());
         return intValue;
