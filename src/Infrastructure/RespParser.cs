@@ -4,35 +4,6 @@ namespace codecrafters_redis.Infrastructure;
 
 public class RespParser
 {
-    public string EncodeRespArray(List<object> items)
-    {
-        var result = new System.Text.StringBuilder();
-        result.Append($"*{items.Count}\r\n");
-        foreach (var item in items)
-        {
-            if (item is string str)
-            {
-                result.Append(EncodeBulkString(str));
-            }
-            else if (item is int integer)
-            {
-                result.Append($":{integer}\r\n");
-            }
-            else if (item is Exception ex)
-            {
-                result.Append($"-{ex.Message}\r\n");
-            }
-            else if (item is List<object> list)
-            {
-                result.Append(EncodeRespArray(list));
-            }
-            else
-            {
-                throw new ArgumentException("Unsupported item type");
-            }
-        }
-        return result.ToString();
-    }
     public List<object> ParseRespArray(string resp)
     {
         var result = new List<object>();
@@ -86,4 +57,5 @@ public class RespParser
         }
         return $"${str.Length}\r\n{str}\r\n";
     }
+
 }
