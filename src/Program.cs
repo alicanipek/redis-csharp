@@ -5,6 +5,7 @@ using codecrafters_redis.CommandHandlers;
 using codecrafters_redis.src.CommandHandlers;
 using codecrafters_redis.src.Services;
 using System.Reflection;
+using codecrafters_redis.src.Infrastructure;
 
 class Program
 {
@@ -16,10 +17,13 @@ class Program
 
         services.AddSingleton<RespParser>();
 
+        services.AddSingleton<Config>();
+        services.AddSingleton<CommandQueue>();
         services.AddSingleton<StorageService>();
         services.AddSingleton<ListStorageService>();
         services.AddSingleton<StreamStorageService>();
         services.AddSingleton<CommandProcessor>();
+
 
         RegisterCommandHandlers(services);
 
