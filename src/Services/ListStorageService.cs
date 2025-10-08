@@ -34,11 +34,11 @@ public class ListStorageService
             return Task.FromResult(new List<string>());
         }
 
-        // Handle negative indices
+        
         if (start < 0) start = list._items.Count + start < 0 ? 0 : list._items.Count + start;
         if (stop < 0) stop = list._items.Count + stop < 0 ? 0 : list._items.Count + stop;
 
-        // Adjust stop to be inclusive
+        
         stop = Math.Min(stop, list._items.Count - 1);
 
         if (start > stop || start >= list._items.Count)

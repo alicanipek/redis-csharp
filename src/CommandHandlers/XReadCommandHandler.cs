@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using codecrafters_redis.CommandHandlers;
 using codecrafters_redis.src.Models;
 using codecrafters_redis.src.Services;
@@ -9,7 +10,8 @@ public class XReadCommandHandler : ICommandHandler
 {
     public string CommandName => "XREAD";
 
-    public StreamStorageService _streamStorageService;
+    private readonly StreamStorageService _streamStorageService;
+
     public XReadCommandHandler(StreamStorageService streamStorageService)
     {
         _streamStorageService = streamStorageService;
@@ -17,65 +19,145 @@ public class XReadCommandHandler : ICommandHandler
 
     public async Task<byte[]> HandleAsync(List<object> arguments)
     {
+        try
+        {
+            var parsedArgs = ParseArguments(arguments);
+            var results = await ProcessStreamsAsync(parsedArgs);
+            if (results == null)
+            {
+                return Encoding.ASCII.GetBytes("*-1\r\n");
+            }
+            if (results.Count == 0)
+            {
+                return Encoding.ASCII.GetBytes("*0\r\n");
+            }
+
+            var response = FormatResponse(results);
+            return Encoding.ASCII.GetBytes(response);
+        }
+        catch (ArgumentException ex)
+        {
+            return Encoding.ASCII.GetBytes($"-ERR {ex.Message}\r\n");
+        }
+    }
+
+    private static XReadArguments ParseArguments(List<object> arguments)
+    {
         if (arguments.Count < 4)
         {
-            return System.Text.Encoding.ASCII.GetBytes("-ERR wrong number of arguments\r\n");
+            throw new ArgumentException("wrong number of arguments");
         }
-        var timeoutms = 0.0m;
-        int i = 1;
+
+        var result = new XReadArguments();
+        var argIndex = 1;
+
         if (arguments.Count > 2 && arguments[1].ToString()!.ToUpper() == "BLOCK")
         {
-            timeoutms = decimal.Parse(arguments[2].ToString()!);
-            i += 2;
+            if (!decimal.TryParse(arguments[2].ToString(), out var timeout))
+            {
+                throw new ArgumentException("invalid timeout value");
+            }
+            result.TimeoutMs = timeout;
+            argIndex += 2;
         }
 
-        List<string> keys = new();
-        List<string> ids = new();
-        
-        while (i < arguments.Count)
+        var streamsIndex = -1;
+        for (var i = argIndex; i < arguments.Count; i++)
         {
-            if (arguments[i].ToString()!.ToUpper() == "STREAMS") { i++; continue; }
-            if (StreamId.TryParse(arguments[i].ToString()!))
+            if (arguments[i].ToString()!.ToUpper() == "STREAMS")
             {
-                ids.Add(arguments[i].ToString()!);
+                streamsIndex = i;
+                break;
             }
-            else
-            {
-                keys.Add(arguments[i].ToString()!);
-            }
-            i++;
         }
 
-        var response = new System.Text.StringBuilder();
-
-        response.Append($"*{keys.Count}\r\n");
-
-        for (int j = 0; j < keys.Count; j++)
+        if (streamsIndex == -1)
         {
-            var entries = await _streamStorageService.GetRangeAsync(keys[j], ids[j], (int)timeoutms);
+            throw new ArgumentException("STREAMS keyword not found");
+        }
 
-            if (entries == null)
-            {
-                return System.Text.Encoding.ASCII.GetBytes("*-1\r\n");
-            }
+        var remainingArgs = arguments.Count - streamsIndex - 1;
+        if (remainingArgs % 2 != 0)
+        {
+            throw new ArgumentException("uneven number of keys and IDs");
+        }
 
-            if (entries.Count == 0)
+        var streamCount = remainingArgs / 2;
+        for (var i = 0; i < streamCount; i++)
+        {
+            var key = arguments[streamsIndex + 1 + i].ToString()!;
+            var id = arguments[streamsIndex + 1 + streamCount + i].ToString()!;
+            result.StreamRequests.Add(new StreamRequest { Key = key, Id = id });
+        }
+
+        return result;
+    }
+
+    private async Task<List<StreamResult>?> ProcessStreamsAsync(XReadArguments args)
+    {
+        List<StreamResult>? results = null;
+
+        foreach (var request in args.StreamRequests)
+        {
+            var entries = request.Id == "$" 
+                ? await _streamStorageService.GetRangeAsync(request.Key, (int)args.TimeoutMs)
+                : await _streamStorageService.GetRangeAsync(request.Key, request.Id, (int)args.TimeoutMs);
+
+            if (entries != null && entries.Count > 0)
             {
-                return System.Text.Encoding.ASCII.GetBytes("*0\r\n");
+                if (results == null)
+                {
+                    results = new List<StreamResult>();
+                }
+                results.Add(new StreamResult { Key = request.Key, Entries = entries });
             }
-            response.Append($"*2\r\n");
-            response.Append($"${keys[j].Length}\r\n{keys[j]}\r\n");
-            response.Append($"*{entries.Count}\r\n");
-            foreach (var entry in entries)
+        }
+
+        return results;
+    }
+
+    private static string FormatResponse(List<StreamResult> results)
+    {
+        var response = new StringBuilder();
+        response.Append($"*{results.Count}\r\n");
+
+        foreach (var result in results)
+        {
+            response.Append("*2\r\n");
+            response.Append($"${result.Key.Length}\r\n{result.Key}\r\n");
+            response.Append($"*{result.Entries.Count}\r\n");
+
+            foreach (var entry in result.Entries)
             {
-                response.Append($"*2\r\n${entry.Id.ToString().Length}\r\n{entry.Id}\r\n*{entry.Fields.Count * 2}\r\n");
+                var entryId = entry.Id.ToString();
+                response.Append($"*2\r\n${entryId.Length}\r\n{entryId}\r\n*{entry.Fields.Count * 2}\r\n");
+
                 foreach (var field in entry.Fields)
                 {
-                    response.Append($"${field.Key.Length}\r\n{field.Key}\r\n${field.Value.Length}\r\n{field.Value}\r\n");
+                    response.Append($"${field.Key.Length}\r\n{field.Key}\r\n");
+                    response.Append($"${field.Value.Length}\r\n{field.Value}\r\n");
                 }
             }
         }
 
-        return System.Text.Encoding.ASCII.GetBytes(response.ToString());
+        return response.ToString();
+    }
+
+    private class XReadArguments
+    {
+        public decimal TimeoutMs { get; set; } = 0;
+        public List<StreamRequest> StreamRequests { get; set; } = new();
+    }
+
+    private class StreamRequest
+    {
+        public string Key { get; set; } = string.Empty;
+        public string Id { get; set; } = string.Empty;
+    }
+
+    private class StreamResult
+    {
+        public string Key { get; set; } = string.Empty;
+        public List<Models.Stream> Entries { get; set; } = new();
     }
 }

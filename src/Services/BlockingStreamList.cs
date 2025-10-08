@@ -17,11 +17,11 @@ public class BlockingStreamList
         {
             items.Add(value);
 
-            // After adding items, notify any waiters (but don't remove items here)
+            
             while (_waiters.Count > 0 && items.Count > 0)
             {
                 var waiter = _waiters.Dequeue();
-                waiter.TrySetResult(true); // Signal that items are available
+                waiter.TrySetResult(true); 
             }
             return;
         }
@@ -41,11 +41,11 @@ public class BlockingStreamList
                 items.Add(value);
             }
 
-            // After adding items, notify any waiters (but don't remove items here)
+            
             while (_waiters.Count > 0 && items.Count > 0)
             {
                 var waiter = _waiters.Dequeue();
-                waiter.TrySetResult(true); // Signal that items are available
+                waiter.TrySetResult(true); 
             }
 
             return items.Count;
@@ -56,6 +56,11 @@ public class BlockingStreamList
         }
     }
 
+    public async Task<List<Stream>?> GetStreamsAsync(int timeoutMilliseconds)
+    {
+        var lastId = items.Count > 0 ? items[^1].Id : new StreamId(0, 0);
+        return await GetStreamsAsync(lastId, timeoutMilliseconds);
+    }
     public async Task<List<Stream>?> GetStreamsAsync(StreamId id, int timeoutMilliseconds)
     {
         await _lock.WaitAsync();
@@ -70,7 +75,7 @@ public class BlockingStreamList
             var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             _waiters.Enqueue(tcs);
 
-            _lock.Release(); // unlock before waiting
+            _lock.Release(); 
 
             Task delay = timeoutMilliseconds > 0
                 ? Task.Delay(TimeSpan.FromMilliseconds(timeoutMilliseconds))
@@ -81,7 +86,7 @@ public class BlockingStreamList
             if (finished == delay)
                 return null;
 
-            // Re-acquire lock and get the item
+            
             await _lock.WaitAsync();
             try
             {
@@ -99,7 +104,7 @@ public class BlockingStreamList
         }
         finally
         {
-            // Ensure lock is released if not already
+            
             if (_lock.CurrentCount == 0)
                 _lock.Release();
         }

@@ -14,11 +14,10 @@ public class BlockingList
                 _items.Insert(0, value);
             }
             
-            // After adding items, notify any waiters (but don't remove items here)
             while (_waiters.Count > 0 && _items.Count > 0)
             {
                 var waiter = _waiters.Dequeue();
-                waiter.TrySetResult(true); // Signal that items are available
+                waiter.TrySetResult(true);
             }
             
             return _items.Count;
@@ -38,11 +37,10 @@ public class BlockingList
                 _items.Add(value);
             }
             
-            // After adding items, notify any waiters (but don't remove items here)
             while (_waiters.Count > 0 && _items.Count > 0)
             {
                 var waiter = _waiters.Dequeue();
-                waiter.TrySetResult(true); // Signal that items are available
+                waiter.TrySetResult(true);
             }
             
             return _items.Count;
@@ -68,7 +66,7 @@ public class BlockingList
             var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             _waiters.Enqueue(tcs);
 
-            _lock.Release(); // unlock before waiting
+            _lock.Release();
 
             Task delay = timeoutMilliseconds > 0
                 ? Task.Delay(TimeSpan.FromMilliseconds(timeoutMilliseconds))
@@ -79,7 +77,6 @@ public class BlockingList
             if (finished == delay)
                 return null;
 
-            // Re-acquire lock and get the item
             await _lock.WaitAsync();
             try
             {
@@ -98,7 +95,7 @@ public class BlockingList
         }
         finally
         {
-            // Ensure lock is released if not already
+            
             if (_lock.CurrentCount == 0)
                 _lock.Release();
         }
