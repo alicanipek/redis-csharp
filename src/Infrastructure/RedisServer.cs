@@ -11,12 +11,14 @@ public class RedisServer
     private readonly CommandProcessor _commandProcessor;
     private readonly TcpListener _server;
     private readonly Config _config;
+    private readonly RespParser _respParser;
 
-    public RedisServer(CommandProcessor commandProcessor, Config config)
+    public RedisServer(CommandProcessor commandProcessor, Config config, RespParser respParser)
     {
         _commandProcessor = commandProcessor;
         _server = new TcpListener(IPAddress.Any, config.Port);
         _config = config;
+        _respParser = respParser;
     }
 
     public async Task StartAsync()
@@ -45,6 +47,24 @@ public class RedisServer
             await client.ConnectAsync(ipEndPoint);
             var messageBytes = Encoding.UTF8.GetBytes($"*1\r\n$4\r\nPING\r\n");
             _ = await client.SendAsync(messageBytes, SocketFlags.None);
+
+            var buffer = new byte[1_024];
+            var received = await client.ReceiveAsync(buffer, SocketFlags.None);
+            System.Console.WriteLine("Replica to send \"REPLCONF listening-port 6380\" command");
+            messageBytes = Encoding.UTF8.GetBytes($"*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$4\r\n6380\r\n");
+            _ = await client.SendAsync(messageBytes, SocketFlags.None);
+            System.Console.WriteLine("Replica to send \"REPLCONF capa psync2\" command");
+            messageBytes = Encoding.UTF8.GetBytes($"*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$6\r\npsync2\r\n");
+            _ = await client.SendAsync(messageBytes, SocketFlags.None);
+            await client.ReceiveAsync(buffer, SocketFlags.None);
+            // byte[] responseBytes = new byte[received];
+            // Array.Copy(buffer, responseBytes, received);
+            // var response = _respParser.Parse(responseBytes);
+            // System.Console.WriteLine("Replica connected to master and received response: " + response);
+            // if (response == "+PONG")
+            // {
+
+            // }
         }
 
         while (true)

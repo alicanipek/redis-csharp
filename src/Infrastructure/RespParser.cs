@@ -71,4 +71,9 @@ public class RespParser
         return sb.ToString();
     }
 
+    public string Parse(byte[] data)
+    {
+        
+        return Encoding.ASCII.GetString(data);
+    }
 }
