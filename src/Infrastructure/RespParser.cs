@@ -58,4 +58,17 @@ public class RespParser
         return $"${str.Length}\r\n{str}\r\n";
     }
 
+    public string EncodeBulkString(List<string> list)
+    {
+        var sb = new StringBuilder();
+        var length = list.Select(s => s.Length).Sum();
+        sb.Append($"${length}\r\n");
+        foreach (var str in list)
+        {
+            sb.Append($"{str}");
+        }
+        sb.Append("\r\n");
+        return sb.ToString();
+    }
+
 }

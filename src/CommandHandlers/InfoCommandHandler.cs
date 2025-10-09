@@ -11,10 +11,15 @@ public class InfoCommandHandler(RespParser respParser, Config config) : ICommand
 
     public Task<byte[]> HandleAsync(List<object> arguments)
     {
-        if (config.ReplicaInfo != null)
+        if (config.ReplicaInfo.Host != null)
         {
             return Task.FromResult(System.Text.Encoding.ASCII.GetBytes(respParser.EncodeBulkString($"role:slave")));
         }
-        return Task.FromResult(System.Text.Encoding.ASCII.GetBytes(respParser.EncodeBulkString("role:master")));
+        return Task.FromResult(System.Text.Encoding.ASCII.GetBytes(respParser.EncodeBulkString(new List<string>
+        {
+            "role:master",
+            $"master_replid:{config.ReplicaInfo.Id}",
+            $"master_repl_offset:{config.ReplicaInfo.Offset}"
+        })));
     }
 }

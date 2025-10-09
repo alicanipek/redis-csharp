@@ -48,7 +48,7 @@ class Program
         }
 
         int port = parseResult.GetValue(portOption);
-        ReplicaInfo? replicaInfo = parseResult.GetValue(replicaOfOption);
+        ReplicaInfo? replicaInfo = parseResult.GetValue(replicaOfOption) ?? new ReplicaInfo();
         var services = new ServiceCollection();
 
 
