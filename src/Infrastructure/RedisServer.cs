@@ -39,32 +39,23 @@ public class RedisServer
                 IPAddress = IPAddress.Parse(_config.ReplicaInfo.Host);
             }
             IPEndPoint ipEndPoint = new(IPAddress, _config.ReplicaInfo.Port);
-            using Socket client = new(
-                ipEndPoint.AddressFamily,
-                SocketType.Stream,
-                ProtocolType.Tcp);
-
-            await client.ConnectAsync(ipEndPoint);
+            TcpClient tcpClient = new TcpClient();
+            await tcpClient.ConnectAsync(ipEndPoint);
+            NetworkStream stream = tcpClient.GetStream();
+            byte[] buffer = new byte[1024];
             var messageBytes = Encoding.UTF8.GetBytes($"*1\r\n$4\r\nPING\r\n");
-            _ = await client.SendAsync(messageBytes, SocketFlags.None);
+            await stream.WriteAsync(messageBytes, 0, messageBytes.Length);
 
-            var buffer = new byte[1_024];
-            var received = await client.ReceiveAsync(buffer, SocketFlags.None);
+            var received = await stream.ReadAsync(buffer, 0, buffer.Length);
             System.Console.WriteLine("Replica to send \"REPLCONF listening-port 6380\" command");
             messageBytes = Encoding.UTF8.GetBytes($"*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$4\r\n6380\r\n");
-            _ = await client.SendAsync(messageBytes, SocketFlags.None);
+            await stream.WriteAsync(messageBytes, 0, messageBytes.Length);
             System.Console.WriteLine("Replica to send \"REPLCONF capa psync2\" command");
             messageBytes = Encoding.UTF8.GetBytes($"*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$6\r\npsync2\r\n");
-            _ = await client.SendAsync(messageBytes, SocketFlags.None);
-            await client.ReceiveAsync(buffer, SocketFlags.None);
-            // byte[] responseBytes = new byte[received];
-            // Array.Copy(buffer, responseBytes, received);
-            // var response = _respParser.Parse(responseBytes);
-            // System.Console.WriteLine("Replica connected to master and received response: " + response);
-            // if (response == "+PONG")
-            // {
-
-            // }
+            await stream.WriteAsync(messageBytes, 0, messageBytes.Length);
+            received = await stream.ReadAsync(buffer, 0, buffer.Length);
+            messageBytes = Encoding.UTF8.GetBytes($"*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n");
+            await stream.WriteAsync(messageBytes, 0, messageBytes.Length);
         }
 
         while (true)
