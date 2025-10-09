@@ -5,8 +5,10 @@ namespace codecrafters_redis.src.Infrastructure;
 public class Config
 {
     public int Port { get; private set; }
-    public Config(int port)
+    public ReplicaInfo? ReplicaInfo { get; set; } = null;
+    public Config(int port, ReplicaInfo? replicaInfo = null)
     {
         Port = port;
+        ReplicaInfo = replicaInfo;
     }
 }

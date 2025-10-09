@@ -18,8 +18,29 @@ class Program
             Description = "Port number for the Redis server",
             DefaultValueFactory = parseResult => 6379,
         };
+
+        var replicaOfOption = new Option<ReplicaInfo>(name: "--replicaof")
+        {
+            Description = "Address of the primary Redis server to replicate from (format: host port)",
+            CustomParser = result =>
+            {
+                var replicaInfo = result.Tokens.Single().Value.Split(' ');
+                if (replicaInfo.Length != 2)
+                {
+                    result.AddError("--replicaof requires two arguments");
+                    return null;
+                }
+                return new ReplicaInfo
+                {
+                    Host = replicaInfo[0],
+                    Port = int.Parse(replicaInfo[1])
+                };
+            }
+        };
+
         RootCommand rootCommand = new();
         rootCommand.Options.Add(portOption);
+        rootCommand.Options.Add(replicaOfOption);
         ParseResult parseResult = rootCommand.Parse(args);
         foreach (ParseError parseError in parseResult.Errors)
         {
@@ -27,12 +48,12 @@ class Program
         }
 
         int port = parseResult.GetValue(portOption);
-        
+        ReplicaInfo? replicaInfo = parseResult.GetValue(replicaOfOption);
         var services = new ServiceCollection();
 
 
         services.AddSingleton<RespParser>();
-        services.AddSingleton(new Config(port));
+        services.AddSingleton(new Config(port, replicaInfo));
 
 
         services.AddSingleton<StorageService>();
