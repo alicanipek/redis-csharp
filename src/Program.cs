@@ -17,8 +17,7 @@ class Program
 
         services.AddSingleton<RespParser>();
 
-        services.AddSingleton<Config>();
-        services.AddSingleton<CommandQueue>();
+        
         services.AddSingleton<StorageService>();
         services.AddSingleton<ListStorageService>();
         services.AddSingleton<StreamStorageService>();

@@ -4,18 +4,9 @@ using codecrafters_redis.Services;
 
 namespace codecrafters_redis.CommandHandlers;
 
-public class BLPopCommandHandler : ICommandHandler
+public class BLPopCommandHandler(ListStorageService listService, RespParser respParser) : ICommandHandler
 {
-    private readonly ListStorageService _listService;
-    private readonly RespParser _respParser;
-
     public string CommandName => "BLPOP";
-
-    public BLPopCommandHandler(ListStorageService listService, RespParser respParser)
-    {
-        _listService = listService;
-        _respParser = respParser;
-    }
 
     public async Task<byte[]> HandleAsync(List<object> arguments)
     {
@@ -32,7 +23,7 @@ public class BLPopCommandHandler : ICommandHandler
         }
 
         var timeoutms = (int)(timeout * 1000);
-        var item = await _listService.BLPopAsync(key, timeoutms);
+        var item = await listService.BLPopAsync(key, timeoutms);
         System.Console.WriteLine("BLPOP returned item: " + item);
         if (item == null)
         {
@@ -40,7 +31,7 @@ public class BLPopCommandHandler : ICommandHandler
         }
         else
         {
-            return Encoding.ASCII.GetBytes($"*2\r\n{_respParser.EncodeBulkString(key)}{_respParser.EncodeBulkString(item)}");
+            return Encoding.ASCII.GetBytes($"*2\r\n{respParser.EncodeBulkString(key)}{respParser.EncodeBulkString(item)}");
         }
     }
 }

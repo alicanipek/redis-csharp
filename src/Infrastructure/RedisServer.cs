@@ -30,6 +30,8 @@ public class RedisServer
                 using (client)
                 {
                     
+                    var clientSession = new ClientSession();
+                    
                     NetworkStream stream = client.GetStream();
                     var buffer = new byte[4096];
 
@@ -41,7 +43,7 @@ public class RedisServer
                         {
                             System.Console.WriteLine("Received request at time: " + DateTime.Now.ToString("hh:mm:ss.fff"));
                             string request = System.Text.Encoding.ASCII.GetString(buffer, 0, bytesRead);
-                            byte[] response = await _commandProcessor.ProcessCommandAsync(request);
+                            byte[] response = await _commandProcessor.ProcessCommandAsync(request, clientSession);
                             await stream.WriteAsync(response, 0, response.Length);
                         }
                     }

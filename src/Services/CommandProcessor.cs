@@ -1,6 +1,7 @@
 using System.Text;
 using codecrafters_redis.CommandHandlers;
 using codecrafters_redis.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace codecrafters_redis.Services;
 
@@ -15,7 +16,7 @@ public class CommandProcessor
         _handlers = commandHandlers.ToDictionary(h => h.CommandName, h => h);
     }
 
-    public async Task<byte[]> ProcessCommandAsync(string request)
+    public async Task<byte[]> ProcessCommandAsync(string request, ClientSession? clientSession)
     {
         var parsed = _respParser.ParseRespArray(request);
         if (parsed.Count == 0)
@@ -29,11 +30,78 @@ public class CommandProcessor
             return Encoding.ASCII.GetBytes("-ERR invalid command\r\n");
         }
 
-        if (_handlers.TryGetValue(commandName, out var handler))
+        
+        if (commandName == "MULTI")
+        {
+            if (clientSession != null)
+            {
+                clientSession.Config.IsMultiActive = true;
+                return Encoding.ASCII.GetBytes("+OK\r\n");
+            }
+        }
+
+        
+        if (commandName == "EXEC")
+        {
+            if (clientSession != null && clientSession.Config.IsMultiActive)
+            {
+                return await HandleExecCommand(clientSession);
+            }
+            return Encoding.ASCII.GetBytes("-ERR EXEC without MULTI\r\n");
+        }
+
+        
+        if (clientSession != null && clientSession.Config.IsMultiActive)
+        {
+            clientSession.CommandQueue.Enqueue(request);
+            return Encoding.ASCII.GetBytes("+QUEUED\r\n");
+        }
+
+        
+        var handler = _handlers.FirstOrDefault(h => h.Key.Equals(commandName, StringComparison.OrdinalIgnoreCase)).Value;
+
+        if (handler != null)
         {
             return await handler.HandleAsync(parsed);
         }
 
         return Encoding.ASCII.GetBytes("-ERR unknown command\r\n");
+    }
+
+    private async Task<byte[]> HandleExecCommand(ClientSession clientSession)
+    {
+        if (!clientSession.Config.IsMultiActive)
+        {
+            return Encoding.ASCII.GetBytes("-ERR EXEC without MULTI\r\n");
+        }
+
+        
+        clientSession.Config.IsMultiActive = false;
+
+        if (clientSession.CommandQueue.IsEmpty())
+        {
+            return Encoding.ASCII.GetBytes("*0\r\n");
+        }
+
+        var results = new List<byte[]>();
+        
+        
+        while (!clientSession.CommandQueue.IsEmpty())
+        {
+            var queuedCommand = clientSession.CommandQueue.Dequeue();
+            var result = await ProcessCommandAsync(queuedCommand, null);
+            results.Add(result);
+        }
+
+        
+        var response = new StringBuilder();
+        response.Append($"*{results.Count}\r\n");
+        
+        foreach (var result in results)
+        {
+            response.Append(Encoding.ASCII.GetString(result));
+        }
+
+        return Encoding.ASCII.GetBytes(response.ToString());
     }
 }
