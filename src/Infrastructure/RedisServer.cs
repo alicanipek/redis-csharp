@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
 using codecrafters_redis.Services;
+using codecrafters_redis.src.Infrastructure;
 
 namespace codecrafters_redis.Infrastructure;
 
@@ -9,10 +10,10 @@ public class RedisServer
     private readonly CommandProcessor _commandProcessor;
     private readonly TcpListener _server;
 
-    public RedisServer(CommandProcessor commandProcessor)
+    public RedisServer(CommandProcessor commandProcessor, Config config)
     {
         _commandProcessor = commandProcessor;
-        _server = new TcpListener(IPAddress.Any, 6379);
+        _server = new TcpListener(IPAddress.Any, config.Port);
     }
 
     public async Task StartAsync()

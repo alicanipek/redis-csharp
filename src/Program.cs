@@ -6,18 +6,35 @@ using codecrafters_redis.src.CommandHandlers;
 using codecrafters_redis.src.Services;
 using System.Reflection;
 using codecrafters_redis.src.Infrastructure;
-
+using System.CommandLine;
+using System.CommandLine.Parsing;
 class Program
 {
     static async Task Main(string[] args)
     {
         Console.WriteLine("Logs from your program will appear here!");
+        var portOption = new Option<int>(name: "--port")
+        {
+            Description = "Port number for the Redis server",
+            DefaultValueFactory = parseResult => 6379,
+        };
+        RootCommand rootCommand = new();
+        rootCommand.Options.Add(portOption);
+        ParseResult parseResult = rootCommand.Parse(args);
+        foreach (ParseError parseError in parseResult.Errors)
+        {
+            Console.WriteLine(parseError.Message);
+        }
 
+        int port = parseResult.GetValue(portOption);
+        
         var services = new ServiceCollection();
 
-        services.AddSingleton<RespParser>();
 
-        
+        services.AddSingleton<RespParser>();
+        services.AddSingleton(new Config(port));
+
+
         services.AddSingleton<StorageService>();
         services.AddSingleton<ListStorageService>();
         services.AddSingleton<StreamStorageService>();

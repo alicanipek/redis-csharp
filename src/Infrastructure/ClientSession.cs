@@ -4,12 +4,18 @@ namespace codecrafters_redis.Infrastructure;
 
 public class ClientSession
 {
-    public Config Config { get; }
+    public bool IsMultiActive { get; private set; }
     public CommandQueue CommandQueue { get; }
 
     public ClientSession()
     {
-        Config = new Config();
+        IsMultiActive = false;
         CommandQueue = new CommandQueue();
     }
+
+    public bool ToggleMultiActiveState(bool isActive)
+    {
+        return IsMultiActive = isActive;
+    }
+
 }

@@ -4,5 +4,9 @@ namespace codecrafters_redis.src.Infrastructure;
 
 public class Config
 {
-    public bool IsMultiActive { get; set; } = false;
+    public int Port { get; private set; }
+    public Config(int port)
+    {
+        Port = port;
+    }
 }

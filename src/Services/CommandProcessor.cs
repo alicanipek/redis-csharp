@@ -35,7 +35,7 @@ public class CommandProcessor
         {
             if (clientSession != null)
             {
-                clientSession.Config.IsMultiActive = true;
+                clientSession.ToggleMultiActiveState(true);
                 return Encoding.ASCII.GetBytes("+OK\r\n");
             }
         }
@@ -43,7 +43,7 @@ public class CommandProcessor
         
         if (commandName == "EXEC")
         {
-            if (clientSession != null && clientSession.Config.IsMultiActive)
+            if (clientSession != null && clientSession.IsMultiActive)
             {
                 return await HandleExecCommand(clientSession);
             }
@@ -52,17 +52,17 @@ public class CommandProcessor
 
         if (commandName == "DISCARD")
         {
-            if (clientSession != null && clientSession.Config.IsMultiActive)
+            if (clientSession != null && clientSession.IsMultiActive)
             {
-                clientSession.Config.IsMultiActive = false;
+                clientSession.ToggleMultiActiveState(false);
                 clientSession.CommandQueue.Clear();
                 return Encoding.ASCII.GetBytes("+OK\r\n");
             }
             return Encoding.ASCII.GetBytes("-ERR DISCARD without MULTI\r\n");
         }
 
-        
-        if (clientSession != null && clientSession.Config.IsMultiActive)
+
+        if (clientSession != null && clientSession.IsMultiActive)
         {
             clientSession.CommandQueue.Enqueue(request);
             return Encoding.ASCII.GetBytes("+QUEUED\r\n");
@@ -81,13 +81,13 @@ public class CommandProcessor
 
     private async Task<byte[]> HandleExecCommand(ClientSession clientSession)
     {
-        if (!clientSession.Config.IsMultiActive)
+        if (!clientSession.IsMultiActive)
         {
             return Encoding.ASCII.GetBytes("-ERR EXEC without MULTI\r\n");
         }
 
-        
-        clientSession.Config.IsMultiActive = false;
+
+        clientSession.ToggleMultiActiveState(false);
 
         if (clientSession.CommandQueue.IsEmpty())
         {
