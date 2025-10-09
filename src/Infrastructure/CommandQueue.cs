@@ -3,7 +3,7 @@ using codecrafters_redis.Services;
 
 namespace codecrafters_redis.src.Infrastructure;
 
-public class CommandQueue()
+public class CommandQueue
 {
     private Queue<string> Commands { get; } = new Queue<string>();
     
@@ -15,6 +15,11 @@ public class CommandQueue()
     public string Dequeue()
     {
         return Commands.Dequeue();
+    }
+
+    public void Clear()
+    {
+        Commands.Clear();
     }
 
     public bool IsEmpty()

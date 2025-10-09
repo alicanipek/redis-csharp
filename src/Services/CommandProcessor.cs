@@ -50,6 +50,17 @@ public class CommandProcessor
             return Encoding.ASCII.GetBytes("-ERR EXEC without MULTI\r\n");
         }
 
+        if (commandName == "DISCARD")
+        {
+            if (clientSession != null && clientSession.Config.IsMultiActive)
+            {
+                clientSession.Config.IsMultiActive = false;
+                clientSession.CommandQueue.Clear();
+                return Encoding.ASCII.GetBytes("+OK\r\n");
+            }
+            return Encoding.ASCII.GetBytes("-ERR DISCARD without MULTI\r\n");
+        }
+
         
         if (clientSession != null && clientSession.Config.IsMultiActive)
         {
