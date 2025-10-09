@@ -48,12 +48,14 @@ class Program
         }
 
         int port = parseResult.GetValue(portOption);
-        ReplicaInfo? replicaInfo = parseResult.GetValue(replicaOfOption) ?? new ReplicaInfo();
+        ReplicaInfo? replicaInfo = parseResult.GetValue(replicaOfOption);
+        var isReplica = replicaInfo != null;
+        replicaInfo ??= new ReplicaInfo();
         var services = new ServiceCollection();
 
 
         services.AddSingleton<RespParser>();
-        services.AddSingleton(new Config(port, replicaInfo));
+        services.AddSingleton(new Config(port, isReplica, replicaInfo));
 
 
         services.AddSingleton<StorageService>();

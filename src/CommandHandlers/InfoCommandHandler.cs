@@ -11,7 +11,7 @@ public class InfoCommandHandler(RespParser respParser, Config config) : ICommand
 
     public Task<byte[]> HandleAsync(List<object> arguments)
     {
-        if (config.ReplicaInfo.Host != null)
+        if (config.IsReplica)
         {
             return Task.FromResult(System.Text.Encoding.ASCII.GetBytes(respParser.EncodeBulkString($"role:slave")));
         }

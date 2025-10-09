@@ -24,7 +24,7 @@ public class RedisServer
     public async Task StartAsync()
     {
         _server.Start();
-        if (_config.ReplicaInfo.Host != null)
+        if (_config.IsReplica && _config.ReplicaInfo != null)
         {
             IPAddress IPAddress;
             if (_config.ReplicaInfo.Host == "localhost")
@@ -60,7 +60,6 @@ public class RedisServer
 
         while (true)
         {
-
             TcpClient client = await _server.AcceptTcpClientAsync();
 
             _ = Task.Run(async () =>
@@ -92,6 +91,7 @@ public class RedisServer
                     }
                 }
             });
+
         }
     }
 }
