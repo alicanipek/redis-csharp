@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using System.Text;
 using codecrafters_redis.Services;
 using codecrafters_redis.src.Infrastructure;
+using codecrafters_redis.src.Models;
 
 namespace codecrafters_redis.Infrastructure;
 
@@ -83,6 +84,15 @@ public class RedisServer
                             string request = System.Text.Encoding.ASCII.GetString(buffer, 0, bytesRead);
                             byte[] response = await _commandProcessor.ProcessCommandAsync(request, clientSession);
                             await stream.WriteAsync(response, 0, response.Length);
+                            System.Console.WriteLine($"Request: {request}");
+                            if (request.Contains("PSYNC"))
+                            {
+                                System.Console.WriteLine($"Master to send RDB file content: {EmptyRdbFile.Content} ");
+                                var rdb = Encoding.ASCII.GetBytes($"${EmptyRdbFile.Bytes.Length}\r\n").ToList();
+                                rdb.AddRange(EmptyRdbFile.Bytes);
+
+                                await stream.WriteAsync(rdb.ToArray(), 0, rdb.Count);
+                            }
                         }
                     }
                     catch (Exception ex)
