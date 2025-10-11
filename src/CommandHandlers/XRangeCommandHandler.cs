@@ -1,5 +1,6 @@
 using System;
-using codecrafters_redis.CommandHandlers;
+using codecrafters_redis.src.CommandHandlers;
+using codecrafters_redis.src.Infrastructure;
 using codecrafters_redis.src.Services;
 
 namespace codecrafters_redis.src.CommandHandlers;
@@ -12,12 +13,13 @@ public class XRangeCommandHandler : ICommandHandler
         _streamStorageService = streamStorageService;
     }
     public string CommandName => "XRANGE";
+    public bool IsWriteCommand => false; 
 
     public async Task<byte[]> HandleAsync(List<object> arguments)
     {
         if (arguments.Count < 4 || arguments.Count > 6)
         {
-            return System.Text.Encoding.ASCII.GetBytes("-ERR wrong number of arguments\r\n");
+            return RespParser.EncodeErrorString("wrong number of arguments");
         }
 
         var key = arguments[1].ToString()!;
@@ -28,7 +30,7 @@ public class XRangeCommandHandler : ICommandHandler
 
         if (entries == null || entries.Count == 0)
         {
-            return System.Text.Encoding.ASCII.GetBytes("*0\r\n");
+            return RespParser.EmptyBulkStringArrayBytes;
         }
 
         var response = new System.Text.StringBuilder();

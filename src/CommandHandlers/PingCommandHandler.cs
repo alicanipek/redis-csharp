@@ -1,21 +1,15 @@
 using System.Text;
-using codecrafters_redis.Infrastructure;
+using codecrafters_redis.src.Infrastructure;
 
-namespace codecrafters_redis.CommandHandlers;
+namespace codecrafters_redis.src.CommandHandlers;
 
 public class PingCommandHandler : ICommandHandler
 {
-    private readonly RespParser _respParser;
-
     public string CommandName => "PING";
-
-    public PingCommandHandler(RespParser respParser)
-    {
-        _respParser = respParser;
-    }
+    public bool IsWriteCommand => false; 
 
     public Task<byte[]> HandleAsync(List<object> arguments)
     {
-        return Task.FromResult(Encoding.ASCII.GetBytes("+PONG\r\n"));
+        return Task.FromResult(RespParser.EncodeSimpleString("PONG"));
     }
 }

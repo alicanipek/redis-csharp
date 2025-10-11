@@ -1,25 +1,19 @@
 using System.Text;
-using codecrafters_redis.Infrastructure;
+using codecrafters_redis.src.Infrastructure;
 
-namespace codecrafters_redis.CommandHandlers;
+namespace codecrafters_redis.src.CommandHandlers;
 
 public class EchoCommandHandler : ICommandHandler
 {
-    private readonly RespParser _respParser;
-
     public string CommandName => "ECHO";
-
-    public EchoCommandHandler(RespParser respParser)
-    {
-        _respParser = respParser;
-    }
+    public bool IsWriteCommand => false; 
 
     public Task<byte[]> HandleAsync(List<object> arguments)
     {
         if (arguments.Count > 1)
         {
-            return Task.FromResult(Encoding.ASCII.GetBytes(_respParser.EncodeBulkString(arguments[1].ToString()!)));
+            return Task.FromResult(RespParser.EncodeBulkStringBytes(arguments[1].ToString()!));
         }
-        return Task.FromResult(Encoding.ASCII.GetBytes("-ERR wrong number of arguments\r\n"));
+        return Task.FromResult(RespParser.EncodeErrorString("wrong number of arguments"));
     }
 }

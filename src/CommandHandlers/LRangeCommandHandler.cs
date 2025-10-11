@@ -1,27 +1,26 @@
 using System.Text;
-using codecrafters_redis.Infrastructure;
-using codecrafters_redis.Services;
+using codecrafters_redis.src.Infrastructure;
+using codecrafters_redis.src.Services;
 
-namespace codecrafters_redis.CommandHandlers;
+namespace codecrafters_redis.src.CommandHandlers;
 
 public class LRangeCommandHandler : ICommandHandler
 {
     private readonly ListStorageService _listService;
-    private readonly RespParser _respParser;
 
     public string CommandName => "LRANGE";
+    public bool IsWriteCommand => false; 
 
-    public LRangeCommandHandler(ListStorageService listService, RespParser respParser)
+    public LRangeCommandHandler(ListStorageService listService)
     {
         _listService = listService;
-        _respParser = respParser;
     }
 
     public async Task<byte[]> HandleAsync(List<object> arguments)
     {
         if (arguments.Count < 4)
         {
-            return Encoding.ASCII.GetBytes("-ERR wrong number of arguments\r\n");
+            return RespParser.EncodeErrorString("wrong number of arguments");
         }
 
         var key = arguments[1].ToString()!;
@@ -33,7 +32,7 @@ public class LRangeCommandHandler : ICommandHandler
         var response = $"*{range.Count}\r\n";
         foreach (var val in range)
         {
-            response += _respParser.EncodeBulkString(val);
+            response += RespParser.EncodeBulkString(val);
         }
         
         return Encoding.ASCII.GetBytes(response);

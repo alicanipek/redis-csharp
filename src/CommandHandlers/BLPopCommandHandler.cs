@@ -1,18 +1,19 @@
 using System.Text;
-using codecrafters_redis.Infrastructure;
-using codecrafters_redis.Services;
+using codecrafters_redis.src.Infrastructure;
+using codecrafters_redis.src.Services;
 
-namespace codecrafters_redis.CommandHandlers;
+namespace codecrafters_redis.src.CommandHandlers;
 
-public class BLPopCommandHandler(ListStorageService listService, RespParser respParser) : ICommandHandler
+public class BLPopCommandHandler(ListStorageService listService) : ICommandHandler
 {
     public string CommandName => "BLPOP";
+    public bool IsWriteCommand => true; 
 
     public async Task<byte[]> HandleAsync(List<object> arguments)
     {
         if (arguments.Count < 2)
         {
-            return Encoding.ASCII.GetBytes("-ERR wrong number of arguments\r\n");
+            return RespParser.EncodeErrorString("wrong number of arguments");
         }
 
         var key = arguments[1].ToString()!;
@@ -27,11 +28,11 @@ public class BLPopCommandHandler(ListStorageService listService, RespParser resp
         System.Console.WriteLine("BLPOP returned item: " + item);
         if (item == null)
         {
-            return Encoding.ASCII.GetBytes("*-1\r\n");
+            return RespParser.NullBulkStringArrayBytes;
         }
         else
         {
-            return Encoding.ASCII.GetBytes($"*2\r\n{respParser.EncodeBulkString(key)}{respParser.EncodeBulkString(item)}");
+            return Encoding.ASCII.GetBytes($"*2\r\n{RespParser.EncodeBulkString(key)}{RespParser.EncodeBulkString(item)}");
         }
     }
 }

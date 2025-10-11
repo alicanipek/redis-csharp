@@ -1,25 +1,20 @@
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using codecrafters_redis.Services;
-using codecrafters_redis.src.Infrastructure;
-using codecrafters_redis.src.Models;
+using codecrafters_redis.src.Services;
 
-namespace codecrafters_redis.Infrastructure;
+namespace codecrafters_redis.src.Infrastructure;
 
 public class RedisServer
 {
     private readonly CommandProcessor _commandProcessor;
     private readonly TcpListener _server;
     private readonly Config _config;
-    private readonly RespParser _respParser;
 
-    public RedisServer(CommandProcessor commandProcessor, Config config, RespParser respParser)
+    public RedisServer(CommandProcessor commandProcessor, Config config)
     {
         _commandProcessor = commandProcessor;
         _server = new TcpListener(IPAddress.Any, config.Port);
         _config = config;
-        _respParser = respParser;
     }
 
     public async Task StartAsync()
@@ -27,36 +22,8 @@ public class RedisServer
         _server.Start();
         if (_config.IsReplica && _config.ReplicaInfo != null)
         {
-            IPAddress IPAddress;
-            if (_config.ReplicaInfo.Host == "localhost")
-            {
-                var hostName = Dns.GetHostName();
-                IPHostEntry localhost = await Dns.GetHostEntryAsync(hostName);
-                // This is the IP address of the local machine
-                IPAddress = localhost.AddressList[0];
-            }
-            else
-            {
-                IPAddress = IPAddress.Parse(_config.ReplicaInfo.Host);
-            }
-            IPEndPoint ipEndPoint = new(IPAddress, _config.ReplicaInfo.Port);
-            TcpClient tcpClient = new TcpClient();
-            await tcpClient.ConnectAsync(ipEndPoint);
-            NetworkStream stream = tcpClient.GetStream();
-            byte[] buffer = new byte[1024];
-            var messageBytes = Encoding.UTF8.GetBytes($"*1\r\n$4\r\nPING\r\n");
-            await stream.WriteAsync(messageBytes, 0, messageBytes.Length);
-
-            var received = await stream.ReadAsync(buffer, 0, buffer.Length);
-            System.Console.WriteLine("Replica to send \"REPLCONF listening-port 6380\" command");
-            messageBytes = Encoding.UTF8.GetBytes($"*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n$4\r\n6380\r\n");
-            await stream.WriteAsync(messageBytes, 0, messageBytes.Length);
-            System.Console.WriteLine("Replica to send \"REPLCONF capa psync2\" command");
-            messageBytes = Encoding.UTF8.GetBytes($"*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$6\r\npsync2\r\n");
-            await stream.WriteAsync(messageBytes, 0, messageBytes.Length);
-            received = await stream.ReadAsync(buffer, 0, buffer.Length);
-            messageBytes = Encoding.UTF8.GetBytes($"*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n");
-            await stream.WriteAsync(messageBytes, 0, messageBytes.Length);
+            var replicaClient = new ReplicaClient(_config.ReplicaInfo, _config.Port);
+            await replicaClient.ConnectToMaster();
         }
 
         while (true)
@@ -82,17 +49,15 @@ public class RedisServer
                         {
                             System.Console.WriteLine("Received request at time: " + DateTime.Now.ToString("hh:mm:ss.fff"));
                             string request = System.Text.Encoding.ASCII.GetString(buffer, 0, bytesRead);
+                
+                
+                            if (request.ToUpper().Contains("REPLCONF") && request.ToUpper().Contains("LISTENING-PORT"))
+                            {
+                                clientSession.MarkAsReplica(stream);
+                            }
+                
                             byte[] response = await _commandProcessor.ProcessCommandAsync(request, clientSession);
                             await stream.WriteAsync(response, 0, response.Length);
-                            System.Console.WriteLine($"Request: {request}");
-                            if (request.Contains("PSYNC"))
-                            {
-                                System.Console.WriteLine($"Master to send RDB file content: {EmptyRdbFile.Content} ");
-                                var rdb = Encoding.ASCII.GetBytes($"${EmptyRdbFile.Bytes.Length}\r\n").ToList();
-                                rdb.AddRange(EmptyRdbFile.Bytes);
-
-                                await stream.WriteAsync(rdb.ToArray(), 0, rdb.Count);
-                            }
                         }
                     }
                     catch (Exception ex)

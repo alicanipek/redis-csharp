@@ -1,5 +1,4 @@
-
-namespace codecrafters_redis.Models;
+namespace codecrafters_redis.src.Models;
 
 public class Item
 {

@@ -1,42 +1,40 @@
 using System.Text;
-using codecrafters_redis.CommandHandlers;
-using codecrafters_redis.Infrastructure;
-using Microsoft.Extensions.DependencyInjection;
+using codecrafters_redis.src.CommandHandlers;
+using codecrafters_redis.src.Infrastructure;
 
-namespace codecrafters_redis.Services;
+namespace codecrafters_redis.src.Services;
 
 public class CommandProcessor
 {
     private readonly Dictionary<string, ICommandHandler> _handlers;
-    private readonly RespParser _respParser;
+    private readonly ReplicaManager _replicaManager;
 
-    public CommandProcessor(IEnumerable<ICommandHandler> commandHandlers, RespParser respParser)
+    public CommandProcessor(IEnumerable<ICommandHandler> commandHandlers, ReplicaManager replicaManager)
     {
-        _respParser = respParser;
         _handlers = commandHandlers.ToDictionary(h => h.CommandName, h => h);
+        _replicaManager = replicaManager;
     }
 
     public async Task<byte[]> ProcessCommandAsync(string request, ClientSession? clientSession)
     {
-        var parsed = _respParser.ParseRespArray(request);
+        var parsed = RespParser.ParseRespArray(request);
         if (parsed.Count == 0)
         {
-            return Encoding.ASCII.GetBytes("-ERR empty command\r\n");
+            return RespParser.EncodeErrorString("empty command");
         }
 
         var commandName = parsed[0].ToString()?.ToUpper();
         if (string.IsNullOrEmpty(commandName))
         {
-            return Encoding.ASCII.GetBytes("-ERR invalid command\r\n");
+            return RespParser.EncodeErrorString("invalid command");
         }
 
-        
         if (commandName == "MULTI")
         {
             if (clientSession != null)
             {
                 clientSession.ToggleMultiActiveState(true);
-                return Encoding.ASCII.GetBytes("+OK\r\n");
+                return RespParser.OkBytes;
             }
         }
 
@@ -47,7 +45,7 @@ public class CommandProcessor
             {
                 return await HandleExecCommand(clientSession);
             }
-            return Encoding.ASCII.GetBytes("-ERR EXEC without MULTI\r\n");
+            return RespParser.EncodeErrorString("EXEC without MULTI");
         }
 
         if (commandName == "DISCARD")
@@ -56,16 +54,16 @@ public class CommandProcessor
             {
                 clientSession.ToggleMultiActiveState(false);
                 clientSession.CommandQueue.Clear();
-                return Encoding.ASCII.GetBytes("+OK\r\n");
+                return RespParser.OkBytes;
             }
-            return Encoding.ASCII.GetBytes("-ERR DISCARD without MULTI\r\n");
+            return RespParser.EncodeErrorString("DISCARD without MULTI");
         }
 
 
         if (clientSession != null && clientSession.IsMultiActive)
         {
             clientSession.CommandQueue.Enqueue(request);
-            return Encoding.ASCII.GetBytes("+QUEUED\r\n");
+            return RespParser.EncodeSimpleString("QUEUED");
         }
 
         
@@ -73,17 +71,31 @@ public class CommandProcessor
 
         if (handler != null)
         {
-            return await handler.HandleAsync(parsed);
+            var response = await handler.HandleAsync(parsed);
+
+
+            if (commandName == "PSYNC" && clientSession != null && clientSession.IsReplica && clientSession.ReplicaStream != null)
+            {
+                _replicaManager.AddReplica(clientSession.ReplicaStream);
+            }
+
+
+            if (handler.IsWriteCommand && (clientSession == null || !clientSession.IsReplica))
+            {
+                await _replicaManager.PropagateWriteCommandAsync(request);
+            }
+
+            return response;
         }
 
-        return Encoding.ASCII.GetBytes("-ERR unknown command\r\n");
+        return RespParser.EncodeErrorString("unknown command");
     }
 
     private async Task<byte[]> HandleExecCommand(ClientSession clientSession)
     {
         if (!clientSession.IsMultiActive)
         {
-            return Encoding.ASCII.GetBytes("-ERR EXEC without MULTI\r\n");
+            return RespParser.EncodeErrorString("EXEC without MULTI");
         }
 
 
@@ -91,7 +103,7 @@ public class CommandProcessor
 
         if (clientSession.CommandQueue.IsEmpty())
         {
-            return Encoding.ASCII.GetBytes("*0\r\n");
+            return RespParser.EmptyBulkStringArrayBytes;
         }
 
         var results = new List<byte[]>();

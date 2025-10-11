@@ -1,10 +1,17 @@
 using System.Text;
 
-namespace codecrafters_redis.Infrastructure;
+namespace codecrafters_redis.src.Infrastructure;
 
-public class RespParser
+public static class RespParser
 {
-    public List<object> ParseRespArray(string resp)
+    public const string OkString = "+OK\r\n";
+    public const string NullBulkString = "$-1\r\n";
+    public static readonly byte[] OkBytes = Encoding.UTF8.GetBytes(OkString);
+    public static readonly byte[] NullBulkBytes = Encoding.UTF8.GetBytes(NullBulkString);
+    public static readonly byte[] NullBulkStringArrayBytes = Encoding.UTF8.GetBytes("*-1\r\n");
+    public static readonly byte[] EmptyBulkStringArrayBytes = Encoding.UTF8.GetBytes("*0\r\n");
+
+    public static List<object> ParseRespArray(string resp)
     {
         var result = new List<object>();
         var lines = resp.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
@@ -49,16 +56,64 @@ public class RespParser
         return result;
     }
 
-    public string EncodeBulkString(string? str)
+    public static byte[] EncodeBulkStringArrayBytes(string[] strings)
+    {
+        if (strings.Length == 0) return EmptyBulkStringArrayBytes;
+        
+        var sb = new StringBuilder();
+        sb.Append('*');
+        sb.Append(strings.Length);
+        sb.Append("\r\n");
+        foreach (var s in strings)
+        {
+            sb.Append(EncodeBulkString(s));
+        }
+        return Encoding.UTF8.GetBytes(sb.ToString());
+    }
+
+    public static byte[] EncodeSimpleString(string s)
+    {
+        return Encoding.UTF8.GetBytes($"+{s}\r\n");
+    }
+
+    public static byte[] EncodeBulkStringBytes(string? str)
+    {
+        var s = "";
+        if (str == null)
+        {
+            s = NullBulkString;
+        }
+        else
+        {
+            s = $"${str.Length}\r\n{str}\r\n";
+        }
+        return Encoding.UTF8.GetBytes(s);
+    }
+
+    public static byte[] EncodeBulkStringBytes(List<string> list)
+    {
+        var s = "";
+        if (list == null || list.Count == 0)
+        {
+            s = NullBulkString;
+        }
+        else
+        {
+            s = EncodeBulkString(list);
+        }
+        return Encoding.UTF8.GetBytes(s);
+    }
+
+    public static string EncodeBulkString(string? str)
     {
         if (str == null)
         {
-            return "$-1\r\n";
+            return NullBulkString;
         }
         return $"${str.Length}\r\n{str}\r\n";
     }
 
-    public string EncodeBulkString(List<string> list)
+    public static string EncodeBulkString(List<string> list)
     {
         var sb = new StringBuilder();
         var length = list.Select(s => s.Length).Sum();
@@ -71,9 +126,14 @@ public class RespParser
         return sb.ToString();
     }
 
-    public string Parse(byte[] data)
+    public static byte[] EncodeErrorString(string message)
     {
-        
-        return Encoding.ASCII.GetString(data);
+        return Encoding.UTF8.GetBytes($"-ERR {message}\r\n");
     }
+
+    public static byte[] EncodeInteger(long number)
+    {
+        return Encoding.UTF8.GetBytes($":{number}\r\n");
+    }
+
 }

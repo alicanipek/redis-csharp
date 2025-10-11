@@ -1,15 +1,39 @@
 using System;
-using codecrafters_redis.CommandHandlers;
+using System.Text;
+using codecrafters_redis.src.CommandHandlers;
 using codecrafters_redis.src.Infrastructure;
+using codecrafters_redis.src.Models;
+using codecrafters_redis.src.Services;
 
 namespace codecrafters_redis.src.CommandHandlers;
 
-public class PsyncCommandHandler(Config config) : ICommandHandler
+public class PsyncCommandHandler : ICommandHandler
 {
+    private readonly Config _config;
+    private readonly ReplicaManager _replicaManager;
+
+    public PsyncCommandHandler(Config config, ReplicaManager replicaManager)
+    {
+        _config = config;
+        _replicaManager = replicaManager;
+    }
+
     public string CommandName => "PSYNC";
-    
+    public bool IsWriteCommand => false; 
+
     public Task<byte[]> HandleAsync(List<object> arguments)
     {
-        return Task.FromResult(System.Text.Encoding.ASCII.GetBytes($"+FULLRESYNC {config.ReplicaInfo.Id} {config.ReplicaInfo.Offset}\r\n"));
+        string rdbfile = "UkVESVMwMDEx+glyZWRpcy12ZXIFNy4yLjD6CnJlZGlzLWJpdHPAQPoFY3RpbWXCbQi8ZfoIdXNlZC1tZW3CsMQQAPoIYW9mLWJhc2XAAP/wbjv+wP9aog==";
+        byte[] encodedFile = Convert.FromBase64String(rdbfile);
+        var length = Encoding.ASCII.GetBytes($"${encodedFile.Length}\r\n");
+        var emptyRdbFileBytes = new byte[length.Length + encodedFile.Length];
+        Array.Copy(length, 0, emptyRdbFileBytes, 0, length.Length);
+        Array.Copy(encodedFile, 0, emptyRdbFileBytes, length.Length, encodedFile.Length);
+
+        var fullres = RespParser.EncodeSimpleString($"FULLRESYNC {_config.ReplicaInfo?.Id ?? "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"} {_config.ReplicaInfo?.Offset ?? 0}");
+        byte[] response = new byte[fullres.Length + emptyRdbFileBytes.Length];
+        Array.Copy(fullres, 0, response, 0, fullres.Length);
+        Array.Copy(emptyRdbFileBytes, 0, response, fullres.Length, emptyRdbFileBytes.Length);
+        return Task.FromResult(response);
     }
 }

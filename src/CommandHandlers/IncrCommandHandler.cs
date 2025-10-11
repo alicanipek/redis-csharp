@@ -1,20 +1,22 @@
 using System;
 using System.Text;
 using System.Windows.Input;
-using codecrafters_redis.CommandHandlers;
-using codecrafters_redis.Services;
+using codecrafters_redis.src.CommandHandlers;
+using codecrafters_redis.src.Infrastructure;
+using codecrafters_redis.src.Services;
 
 namespace codecrafters_redis.src.CommandHandlers;
 
 public class IncrCommandHandler(StorageService storageService) : ICommandHandler 
 {
     public string CommandName => "INCR";
+    public bool IsWriteCommand => true; 
 
     public async Task<byte[]> HandleAsync(List<object> arguments)
     {
         if (arguments.Count != 2)
         {
-            return Encoding.ASCII.GetBytes("-ERR wrong number of arguments for 'INCR' command\r\n");
+            return RespParser.EncodeErrorString("wrong number of arguments for 'INCR' command");
         }
 
         var key = arguments[1].ToString()!;
@@ -22,11 +24,11 @@ public class IncrCommandHandler(StorageService storageService) : ICommandHandler
         try
         {
             var newValue = await storageService.IncrementKeyAsync(key);
-            return Encoding.ASCII.GetBytes($":{newValue}\r\n");
+            return RespParser.EncodeInteger(newValue);
         }
         catch (FormatException)
         {
-            return Encoding.ASCII.GetBytes("-ERR value is not an integer or out of range\r\n");
+            return RespParser.EncodeErrorString("value is not an integer or out of range");
         }
     }
 }

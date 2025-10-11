@@ -1,7 +1,7 @@
 using System;
 using System.Text;
-using codecrafters_redis.CommandHandlers;
-using codecrafters_redis.Infrastructure;
+using codecrafters_redis.src.CommandHandlers;
+using codecrafters_redis.src.Infrastructure;
 using codecrafters_redis.src.Services;
 
 namespace codecrafters_redis.src.CommandHandlers;
@@ -9,19 +9,18 @@ namespace codecrafters_redis.src.CommandHandlers;
 public class XAddCommandHandler : ICommandHandler
 {
     public StreamStorageService _streamStorageService;
-    public RespParser _respParser;
-    public XAddCommandHandler(StreamStorageService streamStorageService, RespParser respParser)
+    public XAddCommandHandler(StreamStorageService streamStorageService)
     {
         _streamStorageService = streamStorageService;
-        _respParser = respParser;
     }
     public string CommandName => "XADD";
+    public bool IsWriteCommand => true; 
 
     public async Task<byte[]> HandleAsync(List<object> arguments)
     {
         if (arguments.Count < 4)
         {
-            return System.Text.Encoding.ASCII.GetBytes("-ERR wrong number of arguments\r\n");
+            return RespParser.EncodeErrorString("wrong number of arguments");
         }
 
         var key = arguments[1].ToString()!;
@@ -32,7 +31,7 @@ public class XAddCommandHandler : ICommandHandler
         {
             if (i + 1 >= arguments.Count)
             {
-                return System.Text.Encoding.ASCII.GetBytes("-ERR wrong number of fields\r\n");
+                return RespParser.EncodeErrorString("wrong number of fields");
             }
             var field = arguments[i].ToString()!;
             var value = arguments[i + 1].ToString()!;
@@ -44,10 +43,10 @@ public class XAddCommandHandler : ICommandHandler
         }
         catch (ArgumentException ex)
         {
-            return Encoding.ASCII.GetBytes($"-ERR {ex.Message}\r\n");
+            return RespParser.EncodeErrorString(ex.Message);
         }
 
-        return Encoding.ASCII.GetBytes(_respParser.EncodeBulkString(id));
+        return RespParser.EncodeBulkStringBytes(id);
 
     }
 }

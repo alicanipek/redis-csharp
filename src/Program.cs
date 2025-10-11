@@ -1,13 +1,11 @@
 using Microsoft.Extensions.DependencyInjection;
-using codecrafters_redis.Infrastructure;
-using codecrafters_redis.Services;
-using codecrafters_redis.CommandHandlers;
 using codecrafters_redis.src.CommandHandlers;
 using codecrafters_redis.src.Services;
 using System.Reflection;
 using codecrafters_redis.src.Infrastructure;
 using System.CommandLine;
 using System.CommandLine.Parsing;
+using codecrafters_redis.src.Models;
 class Program
 {
     static async Task Main(string[] args)
@@ -54,13 +52,13 @@ class Program
         var services = new ServiceCollection();
 
 
-        services.AddSingleton<RespParser>();
         services.AddSingleton(new Config(port, isReplica, replicaInfo));
 
 
         services.AddSingleton<StorageService>();
         services.AddSingleton<ListStorageService>();
         services.AddSingleton<StreamStorageService>();
+        services.AddSingleton<ReplicaManager>();
         services.AddSingleton<CommandProcessor>();
 
 

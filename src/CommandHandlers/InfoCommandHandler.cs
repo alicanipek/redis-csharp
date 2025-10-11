@@ -1,25 +1,25 @@
 using System;
-using codecrafters_redis.CommandHandlers;
-using codecrafters_redis.Infrastructure;
+using codecrafters_redis.src.CommandHandlers;
 using codecrafters_redis.src.Infrastructure;
 
 namespace codecrafters_redis.src.CommandHandlers;
 
-public class InfoCommandHandler(RespParser respParser, Config config) : ICommandHandler
+public class InfoCommandHandler(Config config) : ICommandHandler
 {
     public string CommandName => "INFO";
+    public bool IsWriteCommand => false; 
 
     public Task<byte[]> HandleAsync(List<object> arguments)
     {
         if (config.IsReplica)
         {
-            return Task.FromResult(System.Text.Encoding.ASCII.GetBytes(respParser.EncodeBulkString($"role:slave")));
+            return Task.FromResult(RespParser.EncodeBulkStringBytes($"role:slave"));
         }
-        return Task.FromResult(System.Text.Encoding.ASCII.GetBytes(respParser.EncodeBulkString(new List<string>
+        return Task.FromResult(RespParser.EncodeBulkStringBytes(new List<string>
         {
             "role:master",
             $"master_replid:{config.ReplicaInfo.Id}",
             $"master_repl_offset:{config.ReplicaInfo.Offset}"
-        })));
+        }));
     }
 }

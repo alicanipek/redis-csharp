@@ -1,14 +1,15 @@
 using System.Text;
-using codecrafters_redis.Infrastructure;
-using codecrafters_redis.Services;
+using codecrafters_redis.src.Infrastructure;
+using codecrafters_redis.src.Services;
 
-namespace codecrafters_redis.CommandHandlers;
+namespace codecrafters_redis.src.CommandHandlers;
 
 public class LPushCommandHandler : ICommandHandler
 {
     private readonly ListStorageService _listService;
 
     public string CommandName => "LPUSH";
+    public bool IsWriteCommand => true; 
 
     public LPushCommandHandler(ListStorageService listService)
     {
@@ -19,14 +20,14 @@ public class LPushCommandHandler : ICommandHandler
     {
         if (arguments.Count < 3)
         {
-            return Encoding.ASCII.GetBytes("-ERR wrong number of arguments\r\n");
+            return RespParser.EncodeErrorString("wrong number of arguments");
         }
 
         var key = arguments[1].ToString()!;
         var values = arguments.Skip(2).Select(v => v.ToString()!).ToList();
 
         var count = await _listService.LPushAsync(key, values);
-        
-        return Encoding.ASCII.GetBytes($":{count}\r\n");
+
+        return RespParser.EncodeInteger(count);
     }
 }

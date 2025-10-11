@@ -1,27 +1,26 @@
 using System.Text;
-using codecrafters_redis.Infrastructure;
-using codecrafters_redis.Services;
+using codecrafters_redis.src.Infrastructure;
+using codecrafters_redis.src.Services;
 
-namespace codecrafters_redis.CommandHandlers;
+namespace codecrafters_redis.src.CommandHandlers;
 
 public class SetCommandHandler : ICommandHandler
 {
     private readonly StorageService _storageService;
-    private readonly RespParser _respParser;
 
     public string CommandName => "SET";
+    public bool IsWriteCommand => true; 
 
-    public SetCommandHandler(StorageService storageService, RespParser respParser)
+    public SetCommandHandler(StorageService storageService)
     {
         _storageService = storageService;
-        _respParser = respParser;
     }
 
     public async Task<byte[]> HandleAsync(List<object> arguments)
     {
         if (arguments.Count < 3)
         {
-            return Encoding.ASCII.GetBytes("-ERR wrong number of arguments\r\n");
+            return RespParser.EncodeErrorString("wrong number of arguments");
         }
 
         var key = arguments[1].ToString()!;
@@ -34,6 +33,6 @@ public class SetCommandHandler : ICommandHandler
         }
 
         await _storageService.SetAsync(key, value, expirationMs);
-        return Encoding.ASCII.GetBytes("+OK\r\n");
+        return RespParser.OkBytes;
     }
 }

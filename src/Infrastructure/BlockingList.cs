@@ -1,3 +1,5 @@
+namespace codecrafters_redis.src.Infrastructure;
+
 public class BlockingList
 {
     public readonly List<string> _items = new();
@@ -13,13 +15,13 @@ public class BlockingList
             {
                 _items.Insert(0, value);
             }
-            
+
             while (_waiters.Count > 0 && _items.Count > 0)
             {
                 var waiter = _waiters.Dequeue();
                 waiter.TrySetResult(true);
             }
-            
+
             return _items.Count;
         }
         finally
@@ -36,13 +38,13 @@ public class BlockingList
             {
                 _items.Add(value);
             }
-            
+
             while (_waiters.Count > 0 && _items.Count > 0)
             {
                 var waiter = _waiters.Dequeue();
                 waiter.TrySetResult(true);
             }
-            
+
             return _items.Count;
         }
         finally
@@ -95,7 +97,7 @@ public class BlockingList
         }
         finally
         {
-            
+
             if (_lock.CurrentCount == 0)
                 _lock.Release();
         }

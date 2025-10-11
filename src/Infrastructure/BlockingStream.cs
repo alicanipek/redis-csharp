@@ -59,7 +59,7 @@ public class BlockingStream
             if (finished == delay)
                 return null;
 
-            
+
             await _lock.WaitAsync();
             try
             {
@@ -76,7 +76,7 @@ public class BlockingStream
         }
         finally
         {
-            
+
             if (_lock.CurrentCount == 0)
                 _lock.Release();
         }

@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "coreclr",
+      "request": "launch",
+      "name": "Launch Redis Server",
+      "program": "${workspaceFolder}/bin/Debug/net9.0/codecrafters-redis.dll",
+      "args": [
+        "--port",
+        "6380",
+        "--replicaof",
+        "localhost 6379"
+      ],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "build",
+      "console": "internalConsole",
+      "stopAtEntry": false
+    }
+  ]
+}

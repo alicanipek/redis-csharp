@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
-using codecrafters_redis.Models;
+using codecrafters_redis.src.Models;
 
-namespace codecrafters_redis.Services;
+namespace codecrafters_redis.src.Services;
 
 public class StorageService
 {

@@ -1,27 +1,26 @@
 using System.Text;
-using codecrafters_redis.Infrastructure;
-using codecrafters_redis.Services;
+using codecrafters_redis.src.Infrastructure;
+using codecrafters_redis.src.Services;
 
-namespace codecrafters_redis.CommandHandlers;
+namespace codecrafters_redis.src.CommandHandlers;
 
 public class LPopCommandHandler : ICommandHandler
 {
     private readonly ListStorageService _listService;
-    private readonly RespParser _respParser;
 
     public string CommandName => "LPOP";
+    public bool IsWriteCommand => true; 
 
-    public LPopCommandHandler(ListStorageService listService, RespParser respParser)
+    public LPopCommandHandler(ListStorageService listService)
     {
         _listService = listService;
-        _respParser = respParser;
     }
 
     public async Task<byte[]> HandleAsync(List<object> arguments)
     {
         if (arguments.Count < 2)
         {
-            return Encoding.ASCII.GetBytes("-ERR wrong number of arguments\r\n");
+            return RespParser.EncodeErrorString("wrong number of arguments");
         }
 
         var key = arguments[1].ToString()!;
@@ -30,18 +29,18 @@ public class LPopCommandHandler : ICommandHandler
         {
             var count = int.Parse(arguments[2].ToString()!);
             var poppedItems = await _listService.LPopAsync(key, count);
-            
+
             var response = $"*{poppedItems.Count}\r\n";
             foreach (var item in poppedItems)
             {
-                response += _respParser.EncodeBulkString(item);
+                response += RespParser.EncodeBulkString(item);
             }
             return Encoding.ASCII.GetBytes(response);
         }
         else
         {
             var popped = await _listService.LPopAsync(key);
-            return Encoding.ASCII.GetBytes(_respParser.EncodeBulkString(popped));
+            return RespParser.EncodeBulkStringBytes(popped);
         }
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Text;
-using codecrafters_redis.CommandHandlers;
+using codecrafters_redis.src.CommandHandlers;
+using codecrafters_redis.src.Infrastructure;
 using codecrafters_redis.src.Models;
 using codecrafters_redis.src.Services;
 
@@ -9,6 +10,7 @@ namespace codecrafters_redis.src.CommandHandlers;
 public class XReadCommandHandler : ICommandHandler
 {
     public string CommandName => "XREAD";
+    public bool IsWriteCommand => false; 
 
     private readonly StreamStorageService _streamStorageService;
 
@@ -25,11 +27,11 @@ public class XReadCommandHandler : ICommandHandler
             var results = await ProcessStreamsAsync(parsedArgs);
             if (results == null)
             {
-                return Encoding.ASCII.GetBytes("*-1\r\n");
+                return RespParser.NullBulkStringArrayBytes;
             }
             if (results.Count == 0)
             {
-                return Encoding.ASCII.GetBytes("*0\r\n");
+                return RespParser.EmptyBulkStringArrayBytes;
             }
 
             var response = FormatResponse(results);
@@ -37,7 +39,7 @@ public class XReadCommandHandler : ICommandHandler
         }
         catch (ArgumentException ex)
         {
-            return Encoding.ASCII.GetBytes($"-ERR {ex.Message}\r\n");
+            return RespParser.EncodeErrorString(ex.Message);
         }
     }
 

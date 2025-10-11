@@ -1,7 +1,7 @@
 using System;
 using System.Text;
-using codecrafters_redis.CommandHandlers;
-using codecrafters_redis.Services;
+using codecrafters_redis.src.CommandHandlers;
+using codecrafters_redis.src.Infrastructure;
 using codecrafters_redis.src.Services;
 
 namespace codecrafters_redis.src.CommandHandlers;
@@ -9,6 +9,7 @@ namespace codecrafters_redis.src.CommandHandlers;
 public class TypeCommandHandler : ICommandHandler
 {
     public string CommandName => "TYPE";
+    public bool IsWriteCommand => false; 
     public StorageService _storageService;
     public StreamStorageService _streamStorageService;
     public TypeCommandHandler(StorageService storageService, StreamStorageService streamStorageService)
@@ -21,7 +22,7 @@ public class TypeCommandHandler : ICommandHandler
     {
         if (arguments.Count != 2)
         {
-            return Encoding.ASCII.GetBytes("-ERR wrong number of arguments\r\n");
+            return RespParser.EncodeErrorString("wrong number of arguments");
         }
 
         var key = arguments[1].ToString()!;
@@ -31,15 +32,15 @@ public class TypeCommandHandler : ICommandHandler
             var stream = await _streamStorageService.GetEntriesAsync(key);
             if (stream != null)
             {
-                return Encoding.ASCII.GetBytes($"+stream\r\n");
+                return RespParser.EncodeSimpleString("stream");
             }
             else
             {
-                return Encoding.ASCII.GetBytes($"+none\r\n");
+                return RespParser.EncodeSimpleString("none");
             }
         }
 
-        return Encoding.ASCII.GetBytes($"+{value.GetType().Name.ToLower()}\r\n");
+        return RespParser.EncodeSimpleString(value.GetType().Name.ToLower());
     }
 
 }

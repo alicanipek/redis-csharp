@@ -12,10 +12,10 @@ public class EmptyRdbFile
 
             try
             {
-                // Convert base64 to byte array
+    
                 byte[] bytes = Convert.FromBase64String(contents);
 
-                // Convert each byte to binary and concatenate
+    
                 var binaryString = string.Join("",
                     Array.ConvertAll(bytes, b => Convert.ToString(b, 2).PadLeft(8, '0')));
 

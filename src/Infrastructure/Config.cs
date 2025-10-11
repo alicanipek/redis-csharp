@@ -1,4 +1,5 @@
 using System;
+using codecrafters_redis.src.Models;
 
 namespace codecrafters_redis.src.Infrastructure;
 

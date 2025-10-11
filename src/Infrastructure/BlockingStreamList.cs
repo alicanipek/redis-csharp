@@ -2,7 +2,7 @@ using System;
 using codecrafters_redis.src.Models;
 using Stream = codecrafters_redis.src.Models.Stream;
 
-namespace codecrafters_redis.src.Services;
+namespace codecrafters_redis.src.Infrastructure;
 
 public class BlockingStreamList
 {
@@ -17,7 +17,7 @@ public class BlockingStreamList
         {
             items.Add(value);
 
-            
+
             while (_waiters.Count > 0 && items.Count > 0)
             {
                 var waiter = _waiters.Dequeue();
@@ -41,7 +41,7 @@ public class BlockingStreamList
                 items.Add(value);
             }
 
-            
+
             while (_waiters.Count > 0 && items.Count > 0)
             {
                 var waiter = _waiters.Dequeue();
@@ -86,7 +86,7 @@ public class BlockingStreamList
             if (finished == delay)
                 return null;
 
-            
+
             await _lock.WaitAsync();
             try
             {
@@ -104,7 +104,7 @@ public class BlockingStreamList
         }
         finally
         {
-            
+
             if (_lock.CurrentCount == 0)
                 _lock.Release();
         }
