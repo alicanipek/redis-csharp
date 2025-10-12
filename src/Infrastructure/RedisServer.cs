@@ -22,7 +22,7 @@ public class RedisServer
         _server.Start();
         if (_config.IsReplica && _config.ReplicaInfo != null)
         {
-            var replicaClient = new ReplicaClient(_config.ReplicaInfo, _config.Port);
+            var replicaClient = new ReplicaClient(_config.ReplicaInfo, _commandProcessor, _config.Port);
             await replicaClient.ConnectToMaster();
         }
 

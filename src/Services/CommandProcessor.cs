@@ -14,7 +14,7 @@ public class CommandProcessor
         _handlers = commandHandlers.ToDictionary(h => h.CommandName, h => h);
         _replicaManager = replicaManager;
     }
-
+    
     public async Task<byte[]> ProcessCommandAsync(string request, ClientSession? clientSession)
     {
         var parsed = RespParser.ParseRespArray(request);
