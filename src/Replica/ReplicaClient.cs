@@ -46,6 +46,7 @@ public class ReplicaClient(ReplicaInfo info, CommandProcessor commandProcessor, 
                     {
                         System.Console.WriteLine("Sending ACK to master");
                         await stream.WriteAsync(response);
+                        info.Offset += Encoding.ASCII.GetByteCount(command);
                     }
                 }
             }
