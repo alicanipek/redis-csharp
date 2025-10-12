@@ -25,7 +25,7 @@ public class BLPopCommandHandler(ListStorageService listService) : ICommandHandl
 
         var timeoutms = (int)(timeout * 1000);
         var item = await listService.BLPopAsync(key, timeoutms);
-        System.Console.WriteLine("BLPOP returned item: " + item);
+        
         if (item == null)
         {
             return RespParser.NullBulkStringArrayBytes;

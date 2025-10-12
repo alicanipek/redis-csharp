@@ -35,19 +35,15 @@ public class ReplicaClient(ReplicaInfo info, CommandProcessor commandProcessor, 
             while ((bytesRead = await stream.ReadAsync(_buffer, 0, _buffer.Length)) != 0)
             {
                 string request = System.Text.Encoding.ASCII.GetString(_buffer, 0, bytesRead);
-                System.Console.WriteLine($"Received request: {request.Replace("\r\n", "\\r\\n")}");
                 var commands = ParseCommands(request);
-                System.Console.WriteLine($"Processing command: {commands[0].Replace("\r\n", "\\r\\n")}");
                 foreach (var command in commands)
                 {
                     var response = await commandProcessor.ProcessCommandAsync(command, null);
-                    System.Console.WriteLine($"Received response: {response}");
-                    if (request.Contains("GETACK", StringComparison.CurrentCultureIgnoreCase))
+                    if (command.Contains("GETACK", StringComparison.CurrentCultureIgnoreCase))
                     {
-                        System.Console.WriteLine("Sending ACK to master");
                         await stream.WriteAsync(response);
-                        info.Offset += Encoding.ASCII.GetByteCount(command);
                     }
+                    info.Offset += Encoding.ASCII.GetByteCount(command);
                 }
             }
         };

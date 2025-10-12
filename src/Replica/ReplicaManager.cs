@@ -14,7 +14,6 @@ public class ReplicaManager(Config config)
         if (!config.IsReplica)
         {
             _replicaStreams.Add(stream);
-            Console.WriteLine($"Added replica connection. Total replicas: {_replicaStreams.Count}");
         }
     }
 
@@ -35,11 +34,9 @@ public class ReplicaManager(Config config)
             {
                 await stream.WriteAsync(commandBytes, 0, commandBytes.Length);
                 await stream.FlushAsync();
-                Console.WriteLine($"Propagated command to replica: {command.Replace("\r\n", "\\r\\n")}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Failed to propagate command to replica: {ex.Message}");
                 failedStreams.Add(stream);
             }
         });
