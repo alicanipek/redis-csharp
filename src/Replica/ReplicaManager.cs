@@ -3,7 +3,7 @@ using System.Net.Sockets;
 using System.Text;
 using codecrafters_redis.src.Infrastructure;
 
-namespace codecrafters_redis.src.Services;
+namespace codecrafters_redis.src.Replica;
 
 public class ReplicaManager(Config config)
 {

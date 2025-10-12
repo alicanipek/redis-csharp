@@ -6,6 +6,7 @@ using codecrafters_redis.src.Infrastructure;
 using System.CommandLine;
 using System.CommandLine.Parsing;
 using codecrafters_redis.src.Models;
+using codecrafters_redis.src.Replica;
 class Program
 {
     static async Task Main(string[] args)

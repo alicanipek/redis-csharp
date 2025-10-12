@@ -4,10 +4,11 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Channels;
+using codecrafters_redis.src.Infrastructure;
 using codecrafters_redis.src.Models;
 using codecrafters_redis.src.Services;
 
-namespace codecrafters_redis.src.Infrastructure;
+namespace codecrafters_redis.src.Replica;
 
 public class ReplicaClient(ReplicaInfo info, CommandProcessor commandProcessor, int port)
 {
@@ -34,11 +35,18 @@ public class ReplicaClient(ReplicaInfo info, CommandProcessor commandProcessor, 
             while ((bytesRead = await stream.ReadAsync(_buffer, 0, _buffer.Length)) != 0)
             {
                 string request = System.Text.Encoding.ASCII.GetString(_buffer, 0, bytesRead);
-                byte[] response = await commandProcessor.ProcessCommandAsync(request, null);
+                System.Console.WriteLine($"Received request: {request.Replace("\r\n", "\\r\\n")}");
                 var commands = ParseCommands(request);
+                System.Console.WriteLine($"Processing command: {commands[0].Replace("\r\n", "\\r\\n")}");
                 foreach (var command in commands)
                 {
-                    await commandProcessor.ProcessCommandAsync(command, null);
+                    var response = await commandProcessor.ProcessCommandAsync(command, null);
+                    System.Console.WriteLine($"Received response: {response}");
+                    if (request.Contains("GETACK", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        System.Console.WriteLine("Sending ACK to master");
+                        await stream.WriteAsync(response);
+                    }
                 }
             }
         };
@@ -83,15 +91,65 @@ public class ReplicaClient(ReplicaInfo info, CommandProcessor commandProcessor, 
         var result = new List<string>();
         if (string.IsNullOrEmpty(input)) return result;
 
-        var parts = input.Split('*');
-        for (int i = 1; i < parts.Length; i++) // Start from 1 to skip empty part before first *
+        int pos = 0;
+        while (pos < input.Length)
         {
-            if (!string.IsNullOrEmpty(parts[i]))
+            // Skip whitespace and find the next command start
+            while (pos < input.Length && input[pos] != '*')
+                pos++;
+
+            if (pos >= input.Length) break;
+
+            // Find the end of this complete RESP command
+            int commandEnd = FindCompleteCommand(input, pos);
+            if (commandEnd == -1)
             {
-                result.Add("*" + parts[i]);
+                // Incomplete command, break and wait for more data
+                break;
             }
+
+            // Extract the complete command
+            string command = input.Substring(pos, commandEnd - pos);
+            result.Add(command);
+            pos = commandEnd;
         }
 
         return result;
+    }
+
+    private int FindCompleteCommand(string input, int start)
+    {
+        if (start >= input.Length || input[start] != '*') return -1;
+
+        // Parse array length
+        int crlfPos = input.IndexOf("\r\n", start);
+        if (crlfPos == -1) return -1;
+
+        if (!int.TryParse(input.Substring(start + 1, crlfPos - start - 1), out int arrayLength))
+            return -1;
+
+        int pos = crlfPos + 2;
+
+        // Process each array element (bulk strings)
+        for (int i = 0; i < arrayLength; i++)
+        {
+            if (pos >= input.Length || input[pos] != '$') return -1;
+
+            // Find bulk string length
+            crlfPos = input.IndexOf("\r\n", pos);
+            if (crlfPos == -1) return -1;
+
+            if (!int.TryParse(input.Substring(pos + 1, crlfPos - pos - 1), out int bulkLength))
+                return -1;
+
+            pos = crlfPos + 2;
+
+            // Skip the bulk string data + \r\n
+            pos += bulkLength + 2;
+
+            if (pos > input.Length) return -1;
+        }
+
+        return pos;
     }
 }

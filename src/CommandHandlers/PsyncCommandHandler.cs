@@ -10,12 +10,10 @@ namespace codecrafters_redis.src.CommandHandlers;
 public class PsyncCommandHandler : ICommandHandler
 {
     private readonly Config _config;
-    private readonly ReplicaManager _replicaManager;
 
-    public PsyncCommandHandler(Config config, ReplicaManager replicaManager)
+    public PsyncCommandHandler(Config config)
     {
         _config = config;
-        _replicaManager = replicaManager;
     }
 
     public string CommandName => "PSYNC";
