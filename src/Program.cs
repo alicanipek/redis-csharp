@@ -37,9 +37,21 @@ class Program
             }
         };
 
+        var dirOption = new Option<string>(name: "--dir")
+        {
+            Description = "Directory for database files"
+        };
+
+        var dbFilenameOption = new Option<string>(name: "--dbfilename")
+        {
+            Description = "Filename for the database file"
+        };
+
         RootCommand rootCommand = new();
         rootCommand.Options.Add(portOption);
         rootCommand.Options.Add(replicaOfOption);
+        rootCommand.Options.Add(dirOption);
+        rootCommand.Options.Add(dbFilenameOption);
         ParseResult parseResult = rootCommand.Parse(args);
         foreach (ParseError parseError in parseResult.Errors)
         {
@@ -50,10 +62,18 @@ class Program
         ReplicaInfo? replicaInfo = parseResult.GetValue(replicaOfOption);
         var isReplica = replicaInfo != null;
         replicaInfo ??= new ReplicaInfo();
+
+        var dbFileConfig = new DbFileConfig
+        {
+            Dir = parseResult.GetValue(dirOption),
+            DbFilename = parseResult.GetValue(dbFilenameOption)
+        };
+
+
         var services = new ServiceCollection();
 
 
-        services.AddSingleton(new Config(port, isReplica, replicaInfo));
+        services.AddSingleton(new Config(port, isReplica, dbFileConfig, replicaInfo));
 
 
         services.AddSingleton<StorageService>();
