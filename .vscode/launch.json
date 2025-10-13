@@ -16,6 +16,22 @@
       "preLaunchTask": "build",
       "console": "internalConsole",
       "stopAtEntry": false
+    },
+    {
+      "type": "coreclr",
+      "request": "launch",
+      "name": "Launch Redis Server with file",
+      "program": "${workspaceFolder}/bin/Debug/net9.0/codecrafters-redis.dll",
+      "args": [
+        "--dir",
+        "/home/ipek/Projects/codecrafters-redis-csharp",
+        "--dbfilename",
+        "pear.rdb"
+      ],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "build",
+      "console": "internalConsole",
+      "stopAtEntry": false
     }
   ]
 }

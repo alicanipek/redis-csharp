@@ -21,6 +21,7 @@ public class RedisServer
     public async Task StartAsync()
     {
         _server.Start();
+        
         if (_config.IsReplica && _config.ReplicaInfo != null)
         {
             var replicaClient = new ReplicaClient(_config.ReplicaInfo, _commandProcessor, _config.Port);

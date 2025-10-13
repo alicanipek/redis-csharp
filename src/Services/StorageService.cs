@@ -5,7 +5,21 @@ namespace codecrafters_redis.src.Services;
 
 public class StorageService
 {
-    private readonly ConcurrentDictionary<string, Item> _store = new();
+    private ConcurrentDictionary<string, Item> _store = new();
+
+    public void Init(Dictionary<string, Item> initialData) => _store = new ConcurrentDictionary<string, Item>(initialData);
+
+    public Task SetAsync(string key, string value, DateTime? expiration = null)
+    {
+        var item = new Item
+        {
+            Value = value,
+            Expiration = expiration
+        };
+
+        _store[key] = item;
+        return Task.CompletedTask;
+    }
 
     public Task SetAsync(string key, string value, int? expirationMs = null)
     {
@@ -49,7 +63,13 @@ public class StorageService
             throw new FormatException();
         }
         intValue++;
-        await SetAsync(key, intValue.ToString());
+        await SetAsync(key, intValue.ToString(), expiration: null);
         return intValue;
+    }
+
+    public Task<List<string>> GetAllKeysAsync()
+    {
+        var keys = _store.Keys.ToList();
+        return Task.FromResult(keys);
     }
 }

@@ -71,8 +71,6 @@ class Program
 
 
         var services = new ServiceCollection();
-
-
         services.AddSingleton(new Config(port, isReplica, dbFileConfig, replicaInfo));
 
 
@@ -88,6 +86,13 @@ class Program
         services.AddSingleton<RedisServer>();
 
         var serviceProvider = services.BuildServiceProvider();
+        var storageService = serviceProvider.GetRequiredService<StorageService>();
+        var path = dbFileConfig.DbFilename != null && dbFileConfig.Dir != null ? Path.Combine(dbFileConfig.Dir, dbFileConfig.DbFilename) : "";
+        var initialData = await RDBFileParser.LoadAsync(path);
+        if (initialData != null)
+        {
+            storageService.Init(initialData.Databases[0]);
+        }
 
         var server = serviceProvider.GetRequiredService<RedisServer>();
         await server.StartAsync();
