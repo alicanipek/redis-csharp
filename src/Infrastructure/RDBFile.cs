@@ -80,16 +80,14 @@ public static class RDBFileParser
             var valueType = (byte)fileStream.ReadByte();
             if (valueType == 0xFC)
             {
-                fileStream.Position -= 1;
                 var buffer = new byte[8];
                 await fileStream.ReadExactlyAsync(buffer, 0, 8);
-                var longTimeout = BitConverter.ToInt64(buffer, 0);
+                var longTimeout = BitConverter.ToUInt64(buffer, 0);
                 expiry = Epoch.AddMilliseconds(longTimeout);
                 valueType = (byte)fileStream.ReadByte();
             }
             else if (valueType == 0xFD)
             {
-                fileStream.Position -= 1;
                 var buffer = new byte[4];
                 await fileStream.ReadExactlyAsync(buffer, 0, 4);
                 var intTimeout = BitConverter.ToInt32(buffer, 0);
