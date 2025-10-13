@@ -53,7 +53,7 @@ public class BlockingList
         }
     }
 
-    public async Task<string?> BLPopAsync(string key, int timeoutMilliseconds)
+    public async Task<string?> BLPopAsync(int timeoutMilliseconds)
     {
         await _lock.WaitAsync();
         try

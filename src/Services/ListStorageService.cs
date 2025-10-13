@@ -17,7 +17,7 @@ public class ListStorageService
     public async Task<string?> BLPopAsync(string key, int timeout)
     {
         var list = _listStore.GetOrAdd(key, _ => new BlockingList());
-        var result = await list.BLPopAsync(key, timeout);
+        var result = await list.BLPopAsync(timeout);
         return result;
     }
 

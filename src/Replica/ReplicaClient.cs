@@ -39,11 +39,13 @@ public class ReplicaClient(ReplicaInfo info, CommandProcessor commandProcessor, 
                 foreach (var command in commands)
                 {
                     var response = await commandProcessor.ProcessCommandAsync(command, null);
-                    if (command.Contains("GETACK", StringComparison.CurrentCultureIgnoreCase))
+
+                    info.Offset += Encoding.ASCII.GetByteCount(command);                    
+                    if (command.Contains("GETACK", StringComparison.OrdinalIgnoreCase))
                     {
                         await stream.WriteAsync(response);
                     }
-                    info.Offset += Encoding.ASCII.GetByteCount(command);
+                    
                 }
             }
         };
@@ -91,21 +93,21 @@ public class ReplicaClient(ReplicaInfo info, CommandProcessor commandProcessor, 
         int pos = 0;
         while (pos < input.Length)
         {
-            // Skip whitespace and find the next command start
+            
             while (pos < input.Length && input[pos] != '*')
                 pos++;
 
             if (pos >= input.Length) break;
 
-            // Find the end of this complete RESP command
+            
             int commandEnd = FindCompleteCommand(input, pos);
             if (commandEnd == -1)
             {
-                // Incomplete command, break and wait for more data
+                
                 break;
             }
 
-            // Extract the complete command
+            
             string command = input.Substring(pos, commandEnd - pos);
             result.Add(command);
             pos = commandEnd;
@@ -118,7 +120,7 @@ public class ReplicaClient(ReplicaInfo info, CommandProcessor commandProcessor, 
     {
         if (start >= input.Length || input[start] != '*') return -1;
 
-        // Parse array length
+        
         int crlfPos = input.IndexOf("\r\n", start);
         if (crlfPos == -1) return -1;
 
@@ -127,12 +129,12 @@ public class ReplicaClient(ReplicaInfo info, CommandProcessor commandProcessor, 
 
         int pos = crlfPos + 2;
 
-        // Process each array element (bulk strings)
+        
         for (int i = 0; i < arrayLength; i++)
         {
             if (pos >= input.Length || input[pos] != '$') return -1;
 
-            // Find bulk string length
+            
             crlfPos = input.IndexOf("\r\n", pos);
             if (crlfPos == -1) return -1;
 
@@ -141,7 +143,7 @@ public class ReplicaClient(ReplicaInfo info, CommandProcessor commandProcessor, 
 
             pos = crlfPos + 2;
 
-            // Skip the bulk string data + \r\n
+            
             pos += bulkLength + 2;
 
             if (pos > input.Length) return -1;
