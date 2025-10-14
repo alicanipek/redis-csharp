@@ -20,6 +20,7 @@ public class SubscribeCommandHandler : ICommandHandler
             return Task.FromResult(RespParser.EncodeErrorString("ERR Client is not in a subscribe state"));
         }
 
+        clientSession.IsInPubSubMode = true;
         clientSession.Subscriptions.Add(arguments[1].ToString()!);
         return Task.FromResult(RespParser.EncodeRespArrayBytes(new object[] { "subscribe", arguments[1].ToString()!, clientSession.Subscriptions.Count }));
     }

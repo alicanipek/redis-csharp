@@ -30,6 +30,15 @@ public class CommandProcessor
             return RespParser.EncodeErrorString("invalid command");
         }
 
+        if (clientSession?.IsInPubSubMode == true)
+        {
+            var pubsubcommands = new string[] { "SUBSCRIBE", "UNSUBSCRIBE", "PSUBSCRIBE", "PUNSUBSCRIBE", "PING", "QUIT", "RESET" };
+            if (!pubsubcommands.Contains(commandName))
+            {
+                return RespParser.EncodeErrorString($"Can't execute '{commandName}': only (P|S)SUBSCRIBE / (P|S)UNSUBSCRIBE / PING / QUIT / RESET are allowed in this context");
+            }
+        }
+
 
         if (commandName != "EXEC" && commandName != "DISCARD" && clientSession != null && clientSession.IsMultiActive)
         {

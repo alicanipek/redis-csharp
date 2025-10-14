@@ -13,6 +13,8 @@ public class ReplconfCommandHandler(Config config, ReplicaManager replicaManager
 
     public Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
     {
+        System.Console.WriteLine("Handling REPLCONF command");
+        System.Console.WriteLine($"Arguments: {string.Join(", ", arguments)}");
         if (arguments.Count < 3)
         {
             return Task.FromResult(RespParser.EncodeErrorString("wrong number of arguments"));

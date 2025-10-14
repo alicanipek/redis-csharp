@@ -9,6 +9,7 @@ public class ClientSession
     public bool IsReplica { get; private set; }
     public NetworkStream? ReplicaStream { get; private set; }
     public HashSet<string> Subscriptions { get; } = new();
+    public bool IsInPubSubMode { get; set; } = false;
 
     public ClientSession()
     {
