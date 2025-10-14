@@ -51,11 +51,17 @@ public class RedisServer
                         {
                             System.Console.WriteLine("Received request at time: " + DateTime.Now.ToString("hh:mm:ss.fff"));
                             string request = System.Text.Encoding.ASCII.GetString(buffer, 0, bytesRead);
-                
-                
+
+
                             if (request.ToUpper().Contains("REPLCONF") && request.ToUpper().Contains("LISTENING-PORT"))
                             {
                                 clientSession.MarkAsReplica(stream);
+                            }
+                            
+                            if (request.ToUpper().Contains("SUBSCRIBE") || request.ToUpper().Contains("PSUBSCRIBE"))
+                            {
+                                clientSession.SetStream(stream);
+                                clientSession.IsInPubSubMode = true;
                             }
                 
                             byte[] response = await _commandProcessor.ProcessCommandAsync(request, clientSession);

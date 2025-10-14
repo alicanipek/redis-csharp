@@ -23,6 +23,11 @@ public class ClientSession
         return IsMultiActive = isActive;
     }
 
+    public void SetStream(NetworkStream stream)
+    {
+        ReplicaStream = stream;
+    }
+    
     public void MarkAsReplica(NetworkStream stream)
     {
         IsReplica = true;
