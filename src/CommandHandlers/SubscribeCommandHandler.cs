@@ -3,7 +3,7 @@ using codecrafters_redis.src.Infrastructure;
 
 namespace codecrafters_redis.src.CommandHandlers;
 
-public class SubscribeCommandHandler : ICommandHandler
+public class SubscribeCommandHandler(Config config) : ICommandHandler
 {
     public string CommandName => "SUBSCRIBE";
 
@@ -22,6 +22,11 @@ public class SubscribeCommandHandler : ICommandHandler
 
         clientSession.IsInPubSubMode = true;
         clientSession.Subscriptions.Add(arguments[1].ToString()!);
+        if (!config.PubSubChannels.ContainsKey(arguments[1].ToString()!))
+        {
+            config.PubSubChannels[arguments[1].ToString()!] = new List<ClientSession>();
+        }
+        config.PubSubChannels[arguments[1].ToString()!].Add(clientSession);
         return Task.FromResult(RespParser.EncodeRespArrayBytes(new object[] { "subscribe", arguments[1].ToString()!, clientSession.Subscriptions.Count }));
     }
 }
