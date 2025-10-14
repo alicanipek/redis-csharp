@@ -8,6 +8,7 @@ public class ClientSession
     public CommandQueue CommandQueue { get; }
     public bool IsReplica { get; private set; }
     public NetworkStream? ReplicaStream { get; private set; }
+    public HashSet<string> Subscriptions { get; } = new();
 
     public ClientSession()
     {

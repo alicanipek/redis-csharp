@@ -8,7 +8,7 @@ public class PingCommandHandler : ICommandHandler
     public string CommandName => "PING";
     public bool IsWriteCommand => false; 
 
-    public Task<byte[]> HandleAsync(List<object> arguments)
+    public Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
     {
         return Task.FromResult(RespParser.EncodeSimpleString("PONG"));
     }

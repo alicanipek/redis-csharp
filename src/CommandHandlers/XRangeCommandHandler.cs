@@ -15,7 +15,7 @@ public class XRangeCommandHandler : ICommandHandler
     public string CommandName => "XRANGE";
     public bool IsWriteCommand => false; 
 
-    public async Task<byte[]> HandleAsync(List<object> arguments)
+    public async Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
     {
         if (arguments.Count < 4 || arguments.Count > 6)
         {

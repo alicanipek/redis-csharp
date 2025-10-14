@@ -6,6 +6,16 @@
       "request": "launch",
       "name": "Launch Redis Server",
       "program": "${workspaceFolder}/bin/Debug/net9.0/codecrafters-redis.dll",
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "build",
+      "console": "internalConsole",
+      "stopAtEntry": false
+    },
+    {
+      "type": "coreclr",
+      "request": "launch",
+      "name": "Launch Redis Server with replica",
+      "program": "${workspaceFolder}/bin/Debug/net9.0/codecrafters-redis.dll",
       "args": [
         "--port",
         "6380",

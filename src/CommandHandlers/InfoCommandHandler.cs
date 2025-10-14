@@ -9,7 +9,7 @@ public class InfoCommandHandler(Config config) : ICommandHandler
     public string CommandName => "INFO";
     public bool IsWriteCommand => false; 
 
-    public Task<byte[]> HandleAsync(List<object> arguments)
+    public Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
     {
         if (config.IsReplica)
         {

@@ -4,12 +4,12 @@ using codecrafters_redis.src.Replica;
 
 namespace codecrafters_redis.src.CommandHandlers;
 
-public class WaitCommandHandler(Config config, ReplicaManager replicaManager) : ICommandHandler
+public class WaitCommandHandler(ReplicaManager replicaManager) : ICommandHandler
 {
     public string CommandName => "WAIT";
     public bool IsWriteCommand => false; 
 
-    public async Task<byte[]> HandleAsync(List<object> arguments)
+    public async Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
     {
         if (arguments.Count != 3)
         {

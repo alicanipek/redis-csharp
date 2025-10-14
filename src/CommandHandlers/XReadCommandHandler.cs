@@ -19,7 +19,7 @@ public class XReadCommandHandler : ICommandHandler
         _streamStorageService = streamStorageService;
     }
 
-    public async Task<byte[]> HandleAsync(List<object> arguments)
+    public async Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
     {
         try
         {

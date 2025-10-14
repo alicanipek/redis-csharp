@@ -30,38 +30,8 @@ public class CommandProcessor
             return RespParser.EncodeErrorString("invalid command");
         }
 
-        if (commandName == "MULTI")
-        {
-            if (clientSession != null)
-            {
-                clientSession.ToggleMultiActiveState(true);
-                return RespParser.OkBytes;
-            }
-        }
 
-        
-        if (commandName == "EXEC")
-        {
-            if (clientSession != null && clientSession.IsMultiActive)
-            {
-                return await HandleExecCommand(clientSession);
-            }
-            return RespParser.EncodeErrorString("EXEC without MULTI");
-        }
-
-        if (commandName == "DISCARD")
-        {
-            if (clientSession != null && clientSession.IsMultiActive)
-            {
-                clientSession.ToggleMultiActiveState(false);
-                clientSession.CommandQueue.Clear();
-                return RespParser.OkBytes;
-            }
-            return RespParser.EncodeErrorString("DISCARD without MULTI");
-        }
-
-
-        if (clientSession != null && clientSession.IsMultiActive)
+        if (commandName != "EXEC" && commandName != "DISCARD" && clientSession != null && clientSession.IsMultiActive)
         {
             clientSession.CommandQueue.Enqueue(request);
             return RespParser.EncodeSimpleString("QUEUED");
@@ -72,14 +42,7 @@ public class CommandProcessor
 
         if (handler != null)
         {
-            var response = await handler.HandleAsync(parsed);
-
-
-            if (commandName == "PSYNC" && clientSession != null && clientSession.IsReplica && clientSession.ReplicaStream != null)
-            {
-                _replicaManager.AddReplica(clientSession.ReplicaStream);
-            }
-
+            var response = await handler.HandleAsync(parsed, clientSession);
 
             if (handler.IsWriteCommand && (clientSession == null || !clientSession.IsReplica))
             {
@@ -92,40 +55,4 @@ public class CommandProcessor
         return RespParser.EncodeErrorString("unknown command");
     }
 
-    private async Task<byte[]> HandleExecCommand(ClientSession clientSession)
-    {
-        if (!clientSession.IsMultiActive)
-        {
-            return RespParser.EncodeErrorString("EXEC without MULTI");
-        }
-
-
-        clientSession.ToggleMultiActiveState(false);
-
-        if (clientSession.CommandQueue.IsEmpty())
-        {
-            return RespParser.EmptyBulkStringArrayBytes;
-        }
-
-        var results = new List<byte[]>();
-        
-        
-        while (!clientSession.CommandQueue.IsEmpty())
-        {
-            var queuedCommand = clientSession.CommandQueue.Dequeue();
-            var result = await ProcessCommandAsync(queuedCommand, null);
-            results.Add(result);
-        }
-
-        
-        var response = new StringBuilder();
-        response.Append($"*{results.Count}\r\n");
-        
-        foreach (var result in results)
-        {
-            response.Append(Encoding.ASCII.GetString(result));
-        }
-
-        return Encoding.ASCII.GetBytes(response.ToString());
-    }
 }

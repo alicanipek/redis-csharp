@@ -10,7 +10,7 @@ public class KeysCommandHandler(StorageService storageService) : ICommandHandler
 
     public bool IsWriteCommand => false;
 
-    public async Task<byte[]> HandleAsync(List<object> arguments)
+    public async Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
     {
         if (arguments.Count != 2)
         {

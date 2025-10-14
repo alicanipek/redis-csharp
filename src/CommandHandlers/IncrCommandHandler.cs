@@ -12,7 +12,7 @@ public class IncrCommandHandler(StorageService storageService) : ICommandHandler
     public string CommandName => "INCR";
     public bool IsWriteCommand => true; 
 
-    public async Task<byte[]> HandleAsync(List<object> arguments)
+    public async Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
     {
         if (arguments.Count != 2)
         {

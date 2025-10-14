@@ -3,23 +3,17 @@ using System.Text;
 using codecrafters_redis.src.CommandHandlers;
 using codecrafters_redis.src.Infrastructure;
 using codecrafters_redis.src.Models;
+using codecrafters_redis.src.Replica;
 using codecrafters_redis.src.Services;
 
 namespace codecrafters_redis.src.CommandHandlers;
 
-public class PsyncCommandHandler : ICommandHandler
+public class PsyncCommandHandler(Config config, ReplicaManager replicaManager) : ICommandHandler
 {
-    private readonly Config _config;
-
-    public PsyncCommandHandler(Config config)
-    {
-        _config = config;
-    }
-
     public string CommandName => "PSYNC";
-    public bool IsWriteCommand => false; 
+    public bool IsWriteCommand => false;
 
-    public Task<byte[]> HandleAsync(List<object> arguments)
+    public Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
     {
         string rdbfile = "UkVESVMwMDEx+glyZWRpcy12ZXIFNy4yLjD6CnJlZGlzLWJpdHPAQPoFY3RpbWXCbQi8ZfoIdXNlZC1tZW3CsMQQAPoIYW9mLWJhc2XAAP/wbjv+wP9aog==";
         byte[] encodedFile = Convert.FromBase64String(rdbfile);
@@ -28,10 +22,15 @@ public class PsyncCommandHandler : ICommandHandler
         Array.Copy(length, 0, emptyRdbFileBytes, 0, length.Length);
         Array.Copy(encodedFile, 0, emptyRdbFileBytes, length.Length, encodedFile.Length);
 
-        var fullres = RespParser.EncodeSimpleString($"FULLRESYNC {_config.ReplicaInfo?.Id ?? "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"} {_config.ReplicaInfo?.Offset ?? 0}");
+        var fullres = RespParser.EncodeSimpleString($"FULLRESYNC {config.ReplicaInfo?.Id ?? "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"} {config.ReplicaInfo?.Offset ?? 0}");
         byte[] response = new byte[fullres.Length + emptyRdbFileBytes.Length];
         Array.Copy(fullres, 0, response, 0, fullres.Length);
         Array.Copy(emptyRdbFileBytes, 0, response, fullres.Length, emptyRdbFileBytes.Length);
+
+        if (clientSession != null && clientSession.IsReplica && clientSession.ReplicaStream != null)
+        {
+            replicaManager.AddReplica(clientSession.ReplicaStream);
+        }
         return Task.FromResult(response);
     }
 }

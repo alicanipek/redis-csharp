@@ -16,7 +16,7 @@ public class LPopCommandHandler : ICommandHandler
         _listService = listService;
     }
 
-    public async Task<byte[]> HandleAsync(List<object> arguments)
+    public async Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
     {
         if (arguments.Count < 2)
         {
