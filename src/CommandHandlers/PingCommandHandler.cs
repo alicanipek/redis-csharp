@@ -10,6 +10,10 @@ public class PingCommandHandler : ICommandHandler
 
     public Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
     {
+        if (clientSession != null && clientSession.IsInPubSubMode)
+        {
+            return Task.FromResult(RespParser.EncodeBulkStringArrayBytes(["pong", ""]));
+        }
         return Task.FromResult(RespParser.EncodeSimpleString("PONG"));
     }
 }
