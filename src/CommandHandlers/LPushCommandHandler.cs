@@ -28,6 +28,6 @@ public class LPushCommandHandler : ICommandHandler
 
         var count = await _listService.LPushAsync(key, values);
 
-        return RespParser.EncodeInteger(count);
+        return RespParser.EncodeIntegerBytes(count);
     }
 }

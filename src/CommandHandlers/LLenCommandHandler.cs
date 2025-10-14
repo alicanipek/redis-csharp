@@ -26,6 +26,6 @@ public class LLenCommandHandler : ICommandHandler
         var key = arguments[1].ToString()!;
         var count = await _listService.LLenAsync(key);
 
-        return RespParser.EncodeInteger(count);
+        return RespParser.EncodeIntegerBytes(count);
     }
 }

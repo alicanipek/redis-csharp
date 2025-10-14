@@ -24,7 +24,7 @@ public class IncrCommandHandler(StorageService storageService) : ICommandHandler
         try
         {
             var newValue = await storageService.IncrementKeyAsync(key);
-            return RespParser.EncodeInteger(newValue);
+            return RespParser.EncodeIntegerBytes(newValue);
         }
         catch (FormatException)
         {

@@ -28,6 +28,6 @@ public class WaitCommandHandler(Config config, ReplicaManager replicaManager) : 
 
         await replicaManager.WaitForAcksAsync(numReplicas, cts.Token);
 
-        return RespParser.EncodeInteger(replicaManager._inSync);
+        return RespParser.EncodeIntegerBytes(replicaManager._inSync);
     }
 }

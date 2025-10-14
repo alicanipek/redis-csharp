@@ -56,10 +56,41 @@ public static class RespParser
         return result;
     }
 
+    public static byte[] EncodeRespArrayBytes(object[] items)
+    {
+        if (items.Length == 0) return EmptyBulkStringArrayBytes;
+
+        var sb = new StringBuilder();
+        sb.Append('*');
+        sb.Append(items.Length);
+        sb.Append("\r\n");
+        foreach (var item in items)
+        {
+            switch (item)
+            {
+                case string s:
+                    sb.Append(EncodeBulkString(s));
+                    break;
+                case int n:
+                    sb.Append(EncodeInteger(n));
+                    break;
+                case long n:
+                    sb.Append(EncodeInteger(n));
+                    break;
+                case Exception e:
+                    sb.Append($"-ERR {e.Message}\r\n");
+                    break;
+                default:
+                    throw new NotSupportedException($"Type {item.GetType()} not supported.");
+            }
+        }
+        return Encoding.UTF8.GetBytes(sb.ToString());
+    }
+
     public static byte[] EncodeBulkStringArrayBytes(string[] strings)
     {
         if (strings.Length == 0) return EmptyBulkStringArrayBytes;
-        
+
         var sb = new StringBuilder();
         sb.Append('*');
         sb.Append(strings.Length);
@@ -131,9 +162,19 @@ public static class RespParser
         return Encoding.UTF8.GetBytes($"-ERR {message}\r\n");
     }
 
-    public static byte[] EncodeInteger(long number)
+    public static byte[] EncodeIntegerBytes(long number)
     {
         return Encoding.UTF8.GetBytes($":{number}\r\n");
+    }
+
+    public static string EncodeInteger(int number)
+    {
+        return $":{number}\r\n";
+    }
+    
+    public static string EncodeInteger(long number)
+    {
+        return $":{number}\r\n";
     }
 
 }
