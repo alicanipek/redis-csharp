@@ -87,21 +87,6 @@ public static class RespParser
         return Encoding.UTF8.GetBytes(sb.ToString());
     }
 
-    public static byte[] EncodeBulkStringArrayBytes(string[] strings)
-    {
-        if (strings.Length == 0) return EmptyBulkStringArrayBytes;
-
-        var sb = new StringBuilder();
-        sb.Append('*');
-        sb.Append(strings.Length);
-        sb.Append("\r\n");
-        foreach (var s in strings)
-        {
-            sb.Append(EncodeBulkString(s));
-        }
-        return Encoding.UTF8.GetBytes(sb.ToString());
-    }
-
     public static byte[] EncodeSimpleString(string s)
     {
         return Encoding.UTF8.GetBytes($"+{s}\r\n");

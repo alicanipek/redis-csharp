@@ -21,7 +21,7 @@ public class KeysCommandHandler(StorageService storageService) : ICommandHandler
         if (pattern == "*")
         {
             var keys = await storageService.GetAllKeysAsync();
-            return RespParser.EncodeBulkStringArrayBytes(keys.ToArray());
+            return RespParser.EncodeRespArrayBytes([.. keys]);
         }
         else
         {

@@ -12,7 +12,7 @@ public class PingCommandHandler : ICommandHandler
     {
         if (clientSession != null && clientSession.IsInPubSubMode)
         {
-            return Task.FromResult(RespParser.EncodeBulkStringArrayBytes(["pong", ""]));
+            return Task.FromResult(RespParser.EncodeRespArrayBytes(["pong", ""]));
         }
         return Task.FromResult(RespParser.EncodeSimpleString("PONG"));
     }

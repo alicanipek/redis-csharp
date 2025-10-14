@@ -53,22 +53,22 @@ public class ReplicaClient(ReplicaInfo info, CommandProcessor commandProcessor, 
 
     private async Task Ping()
     {
-        await SendAndReceiveCommand(RespParser.EncodeBulkStringArrayBytes(new[] { "PING" }));
+        await SendAndReceiveCommand(RespParser.EncodeRespArrayBytes(new[] { "PING" }));
     }
 
     private async Task SendReplconfListeningPort()
     {
-        await SendAndReceiveCommand(RespParser.EncodeBulkStringArrayBytes(new[] { "REPLCONF", "listening-port", port.ToString() }));
+        await SendAndReceiveCommand(RespParser.EncodeRespArrayBytes(new[] { "REPLCONF", "listening-port", port.ToString() }));
     }
 
     private async Task ConfCapabilities()
     {
-        await SendAndReceiveCommand(RespParser.EncodeBulkStringArrayBytes(new[] { "REPLCONF", "capa", "psync2" }));
+        await SendAndReceiveCommand(RespParser.EncodeRespArrayBytes(new[] { "REPLCONF", "capa", "psync2" }));
     }
 
     private async Task PSync(string masterReplicationId, int offset)
     {
-        var payload = await SendAndReceiveCommand(RespParser.EncodeBulkStringArrayBytes(new[] { "PSYNC", masterReplicationId, offset.ToString() }));
+        var payload = await SendAndReceiveCommand(RespParser.EncodeRespArrayBytes(new[] { "PSYNC", masterReplicationId, offset.ToString() }));
     }
 
     private async Task<string> SendAndReceiveCommand(byte[] message)
