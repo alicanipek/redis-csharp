@@ -9,5 +9,4 @@ public class Config(int port, bool isReplica, DbFileConfig? dbFileConfig = null,
     public bool IsReplica { get; private set; } = isReplica;
     public DbFileConfig? DbFileConfig { get; set; } = dbFileConfig;
     public ReplicaInfo? ReplicaInfo { get; set; } = replicaInfo;
-    public Dictionary<string, List<ClientSession>> PubSubChannels { get; private set; } = new();
 }

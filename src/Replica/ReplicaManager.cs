@@ -31,7 +31,7 @@ public class ReplicaManager(Config config)
         
         if (!_hasPendingWrites)
         {
-            // _inSync = Math.Min(_replicaStreams.Count, expectedReplicas);
+            
             _inSync = _replicaStreams.Count;
             return;
         }

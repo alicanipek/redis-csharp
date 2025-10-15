@@ -73,10 +73,12 @@ class Program
         var services = new ServiceCollection();
         services.AddSingleton(new Config(port, isReplica, dbFileConfig, replicaInfo));
 
-
+        // Core services
+        services.AddSingleton<IPubSubService, PubSubService>();
         services.AddSingleton<StorageService>();
         services.AddSingleton<ListStorageService>();
         services.AddSingleton<StreamStorageService>();
+        services.AddSingleton<SortedSetStorageService>();
         services.AddSingleton<ReplicaManager>();
         services.AddSingleton<CommandProcessor>();
 

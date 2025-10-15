@@ -1,9 +1,10 @@
 using System;
 using codecrafters_redis.src.Infrastructure;
+using codecrafters_redis.src.Services;
 
 namespace codecrafters_redis.src.CommandHandlers;
 
-public class SubscribeCommandHandler(Config config) : ICommandHandler
+public class SubscribeCommandHandler(IPubSubService pubSubService) : ICommandHandler
 {
     public string CommandName => "SUBSCRIBE";
 
@@ -20,13 +21,9 @@ public class SubscribeCommandHandler(Config config) : ICommandHandler
             return Task.FromResult(RespParser.EncodeErrorString("ERR Client is not in a subscribe state"));
         }
 
-        clientSession.IsInPubSubMode = true;
-        clientSession.Subscriptions.Add(arguments[1].ToString()!);
-        if (!config.PubSubChannels.ContainsKey(arguments[1].ToString()!))
-        {
-            config.PubSubChannels[arguments[1].ToString()!] = new List<ClientSession>();
-        }
-        config.PubSubChannels[arguments[1].ToString()!].Add(clientSession);
-        return Task.FromResult(RespParser.EncodeRespArrayBytes(new object[] { "subscribe", arguments[1].ToString()!, clientSession.Subscriptions.Count }));
+        var channel = arguments[1].ToString()!;
+        pubSubService.Subscribe(clientSession, channel);
+        
+        return Task.FromResult(RespParser.EncodeRespArrayBytes(new object[] { "subscribe", channel, clientSession.Subscriptions.Count }));
     }
 }

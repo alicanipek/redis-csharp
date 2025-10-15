@@ -1,9 +1,10 @@
 using System;
 using codecrafters_redis.src.Infrastructure;
+using codecrafters_redis.src.Services;
 
 namespace codecrafters_redis.src.CommandHandlers;
 
-public class PublishCommandHandler(Config config) : ICommandHandler
+public class PublishCommandHandler(IPubSubService pubSubService) : ICommandHandler
 {
     public string CommandName => "PUBLISH";
     public bool IsWriteCommand => false;
@@ -14,19 +15,11 @@ public class PublishCommandHandler(Config config) : ICommandHandler
         {
             return RespParser.EncodeErrorString("wrong number of arguments");
         }
+        
         var channel = arguments[1].ToString()!;
-        var subscribersCount = config.PubSubChannels.TryGetValue(channel, out List<ClientSession>? value) ? value!.Count : 0;
-        if (subscribersCount > 0)
-        {
-            foreach (var subscriber in value!)
-            {
-                if (subscriber.ReplicaStream != null)
-                {
-                    System.Console.WriteLine($"Publishing message to channel {channel} for subscriber.");
-                    await subscriber.ReplicaStream.WriteAsync(RespParser.EncodeRespArrayBytes(["message", channel, arguments[2].ToString()!]));
-                }
-            }
-        }
+        var message = arguments[2].ToString()!;
+        
+        var subscribersCount = await pubSubService.PublishAsync(channel, message);
         return RespParser.EncodeIntegerBytes(subscribersCount);
     }
 }

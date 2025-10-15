@@ -10,12 +10,14 @@ public class RedisServer
     private readonly CommandProcessor _commandProcessor;
     private readonly TcpListener _server;
     private readonly Config _config;
+    private readonly IPubSubService _pubSubService;
 
-    public RedisServer(CommandProcessor commandProcessor, Config config)
+    public RedisServer(CommandProcessor commandProcessor, Config config, IPubSubService pubSubService)
     {
         _commandProcessor = commandProcessor;
         _server = new TcpListener(IPAddress.Any, config.Port);
         _config = config;
+        _pubSubService = pubSubService;
     }
 
     public async Task StartAsync()
@@ -71,6 +73,14 @@ public class RedisServer
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Client connection error: {ex.Message}");
+                    }
+                    finally
+                    {
+                        // Clean up client subscriptions when client disconnects
+                        if (clientSession.IsInPubSubMode)
+                        {
+                            _pubSubService.CleanupClient(clientSession);
+                        }
                     }
                 }
             });

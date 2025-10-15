@@ -27,9 +27,9 @@ public class PsyncCommandHandler(Config config, ReplicaManager replicaManager) :
         Array.Copy(fullres, 0, response, 0, fullres.Length);
         Array.Copy(emptyRdbFileBytes, 0, response, fullres.Length, emptyRdbFileBytes.Length);
 
-        if (clientSession != null && clientSession.IsReplica && clientSession.ReplicaStream != null)
+        if (clientSession != null && clientSession.IsReplica && clientSession.ClientStream != null)
         {
-            replicaManager.AddReplica(clientSession.ReplicaStream);
+            replicaManager.AddReplica(clientSession.ClientStream);
         }
         return Task.FromResult(response);
     }

@@ -7,7 +7,7 @@ public class ClientSession
     public bool IsMultiActive { get; private set; }
     public CommandQueue CommandQueue { get; }
     public bool IsReplica { get; private set; }
-    public NetworkStream? ReplicaStream { get; private set; }
+    public NetworkStream? ClientStream { get; private set; }
     public HashSet<string> Subscriptions { get; } = new();
     public bool IsInPubSubMode { get; set; } = false;
 
@@ -25,12 +25,12 @@ public class ClientSession
 
     public void SetStream(NetworkStream stream)
     {
-        ReplicaStream = stream;
+        ClientStream = stream;
     }
     
     public void MarkAsReplica(NetworkStream stream)
     {
         IsReplica = true;
-        ReplicaStream = stream;
+        ClientStream = stream;
     }
 }
