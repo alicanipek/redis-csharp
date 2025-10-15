@@ -23,6 +23,10 @@ public class GeoStorageService
 
     public int GeoAdd(string key, GeoLocation location)
     {
+        if (!IsValidLongitude(location.Longitude) || !IsValidLatitude(location.Latitude))
+        {
+            throw new ArgumentException($"invalid longitude,latitude pair {location.Longitude},{location.Latitude}");
+        }
         var geoSet = GeoLocations.GetOrAdd(key, _ => new SortedSet<GeoLocation>());
         if (geoSet.Any(loc => loc.Member == location.Member))
         {
@@ -30,5 +34,15 @@ public class GeoStorageService
         }
         geoSet.Add(location);
         return 1; // New member added
+    }
+
+    private bool IsValidLatitude(double latitude)
+    {
+        return latitude >= -85.05112878 && latitude <= 85.05112878;
+    }
+
+    private bool IsValidLongitude(double longitude)
+    {
+        return longitude >= -180 && longitude <= 180;
     }
 }

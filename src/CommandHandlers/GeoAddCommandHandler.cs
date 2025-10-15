@@ -18,7 +18,16 @@ public class GeoAddCommandHandler(GeoStorageService geoStorageService) : IComman
             double.Parse(arguments[3].ToString()!),
             arguments[4].ToString()!
         );
-        var addedCount = geoStorageService.GeoAdd(key, location);
-        return Task.FromResult(RespParser.EncodeIntegerBytes(addedCount));
+        try
+        {
+
+            var addedCount = geoStorageService.GeoAdd(key, location);
+            return Task.FromResult(RespParser.EncodeIntegerBytes(addedCount));
+
+        }
+        catch (System.Exception ex)
+        {
+            return Task.FromResult(RespParser.EncodeErrorString(ex.Message));
+        }
     }
 }
