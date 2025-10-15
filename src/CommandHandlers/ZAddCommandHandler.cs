@@ -1,15 +1,11 @@
 using System;
 using codecrafters_redis.src.Infrastructure;
 using codecrafters_redis.src.Services;
-
 namespace codecrafters_redis.src.CommandHandlers;
-
 public class ZAddCommandHandler(SortedSetStorageService sortedSetStorageService) : ICommandHandler
 {
     public string CommandName => "ZADD";
-
-    public bool IsWriteCommand => false;
-
+    public bool IsWriteCommand => true;
     public Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
     {
         if (arguments.Count < 4 || arguments.Count % 2 != 0)
@@ -27,7 +23,6 @@ public class ZAddCommandHandler(SortedSetStorageService sortedSetStorageService)
             var member = arguments[i + 1].ToString()!;
             scoreMembers.Add(new SetItem(score, member));
         }
-
         var addedCount = sortedSetStorageService.ZAdd(key, scoreMembers);
         return Task.FromResult(RespParser.EncodeIntegerBytes(addedCount));
     }
