@@ -99,15 +99,15 @@ public class SortedSetStorageService
         }
 
         var items = sortedSet.ToList();
-        
+
         // Handle negative indices
         if (start < 0) start = items.Count + start;
         if (stop < 0) stop = items.Count + stop;
-        
+
         // Clamp indices
         start = Math.Max(0, start);
         stop = Math.Min(items.Count - 1, stop);
-        
+
         if (start > stop || start >= items.Count)
         {
             return new List<string>();
@@ -122,7 +122,7 @@ public class SortedSetStorageService
                 result.Add(items[i].Score.ToString());
             }
         }
-        
+
         return result;
     }
 
@@ -134,15 +134,15 @@ public class SortedSetStorageService
         }
 
         var items = sortedSet.Reverse().ToList();
-        
+
         // Handle negative indices
         if (start < 0) start = items.Count + start;
         if (stop < 0) stop = items.Count + stop;
-        
+
         // Clamp indices
         start = Math.Max(0, start);
         stop = Math.Min(items.Count - 1, stop);
-        
+
         if (start > stop || start >= items.Count)
         {
             return new List<string>();
@@ -157,18 +157,18 @@ public class SortedSetStorageService
                 result.Add(items[i].Score.ToString());
             }
         }
-        
+
         return result;
     }
 
     public double ZIncrBy(string key, string member, double increment)
     {
         var sortedSet = SortedSets.GetOrAdd(key, _ => new SortedSet<SetItem>());
-        
+
         // Find existing member
         var existingMember = sortedSet.FirstOrDefault(x => x.Member == member);
         double newScore;
-        
+
         if (existingMember != null)
         {
             newScore = existingMember.Score + increment;
@@ -178,7 +178,7 @@ public class SortedSetStorageService
         {
             newScore = increment;
         }
-        
+
         sortedSet.Add(new SetItem(newScore, member));
         return newScore;
     }
@@ -228,5 +228,11 @@ public class SortedSetStorageService
 
         var existingMember = sortedSet.FirstOrDefault(x => x.Member == member);
         return existingMember?.Score;
+    }
+
+    public SortedSet<SetItem>? GetSortedSet(string key)
+    {
+        SortedSets.TryGetValue(key, out var sortedSet);
+        return sortedSet;
     }
 }

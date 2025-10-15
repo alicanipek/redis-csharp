@@ -134,4 +134,11 @@ public class GeoLocation
     {
         return EARTH_RADIUS_IN_METERS * Math.Abs(deg_rad(lat2d) - deg_rad(lat1d));
     }
+
+    public int GeohashGetDistanceIfInRadius(GeoLocation other, double radius)
+    {
+        var d = GeohashGetDistance(other);
+        if (d > radius) return 0;
+        return 1;
+    }
 }
