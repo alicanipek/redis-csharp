@@ -25,7 +25,7 @@ public class GeoAddCommandHandler(SortedSetStorageService sortedSetStorageServic
             return Task.FromResult(RespParser.EncodeErrorString($"invalid longitude,latitude pair {location.Longitude},{location.Latitude}"));
         }
 
-        var addedCount = sortedSetStorageService.ZAdd(key, new List<SetItem>{ new SetItem(0, location.Member) });
+        var addedCount = sortedSetStorageService.ZAdd(key, new List<SetItem>{ new SetItem(location.Encode(), location.Member) });
         return Task.FromResult(RespParser.EncodeIntegerBytes(addedCount));
 
     }
