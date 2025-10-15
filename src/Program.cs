@@ -79,7 +79,6 @@ class Program
         services.AddSingleton<ListStorageService>();
         services.AddSingleton<StreamStorageService>();
         services.AddSingleton<SortedSetStorageService>();
-        services.AddSingleton<GeoStorageService>();
         services.AddSingleton<ReplicaManager>();
         services.AddSingleton<CommandProcessor>();
 
