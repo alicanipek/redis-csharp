@@ -23,7 +23,7 @@ public class ZRevRankCommandHandler(SortedSetStorageService sortedSetStorageServ
         
         if (rank == -1)
         {
-            return Task.FromResult(RespParser.NullBulkBytes);
+            return Task.FromResult(RespParser.NullBulkStringBytes);
         }
         
         return Task.FromResult(RespParser.EncodeIntegerBytes(rank));

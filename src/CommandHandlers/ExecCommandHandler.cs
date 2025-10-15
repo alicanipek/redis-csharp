@@ -29,7 +29,7 @@ public class ExecCommandHandler(IServiceProvider serviceProvider) : ICommandHand
 
         if (clientSession.CommandQueue.IsEmpty())
         {
-            return RespParser.EmptyBulkStringArrayBytes;
+            return RespParser.EmptyArrayBytes;
         }
 
         var results = new List<byte[]>();

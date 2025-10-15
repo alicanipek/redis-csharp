@@ -27,18 +27,18 @@ public class ConfigCommandHandler(Config config) : ICommandHandler
             if (string.Equals(parameter, "dir", StringComparison.OrdinalIgnoreCase))
             {
                 var dir = config.DbFileConfig?.Dir ?? "";
-                return Task.FromResult(RespParser.EncodeRespArrayBytes(new[] { "dir", dir }));
+                return Task.FromResult(RespParser.EncodeRespArrayBytes(["dir", dir]));
             }
             else if (string.Equals(parameter, "dbfilename", StringComparison.OrdinalIgnoreCase))
             {
                 var dbFilename = config.DbFileConfig?.DbFilename ?? "";
-                return Task.FromResult(RespParser.EncodeRespArrayBytes(new[] { "dbfilename", dbFilename }));
+                return Task.FromResult(RespParser.EncodeRespArrayBytes(["dbfilename", dbFilename]));
             }
             else if (string.Equals(parameter, "*", StringComparison.OrdinalIgnoreCase))
             {
                 var dir = config.DbFileConfig?.Dir ?? "";
                 var dbFilename = config.DbFileConfig?.DbFilename ?? "";
-                return Task.FromResult(RespParser.EncodeRespArrayBytes(new[] { "dir", dir, "dbfilename", dbFilename }));
+                return Task.FromResult(RespParser.EncodeRespArrayBytes(["dir", dir, "dbfilename", dbFilename]));
             }
             else
             {

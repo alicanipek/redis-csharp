@@ -17,7 +17,7 @@ public class ZRankCommandHandler(SortedSetStorageService sortedSetStorageService
         var rank = sortedSetStorageService.ZRank(key, member);
         if (rank == -1)
         {
-            return Task.FromResult(RespParser.NullBulkBytes);
+            return Task.FromResult(RespParser.NullBulkStringBytes);
         }
         return Task.FromResult(RespParser.EncodeIntegerBytes(rank));
     }

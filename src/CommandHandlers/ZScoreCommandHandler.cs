@@ -23,7 +23,7 @@ public class ZScoreCommandHandler(SortedSetStorageService sortedSetStorageServic
         
         if (score == null)
         {
-            return Task.FromResult(RespParser.NullBulkBytes);
+            return Task.FromResult(RespParser.NullBulkStringBytes);
         }
         
         return Task.FromResult(RespParser.EncodeBulkStringBytes(score.ToString()));

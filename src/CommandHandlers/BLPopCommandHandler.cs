@@ -28,7 +28,7 @@ public class BLPopCommandHandler(ListStorageService listService) : ICommandHandl
         
         if (item == null)
         {
-            return RespParser.NullBulkStringArrayBytes;
+            return RespParser.NullArrayBytes;
         }
         else
         {

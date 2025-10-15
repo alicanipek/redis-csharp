@@ -30,7 +30,7 @@ public class XRangeCommandHandler : ICommandHandler
 
         if (entries == null || entries.Count == 0)
         {
-            return RespParser.EmptyBulkStringArrayBytes;
+            return RespParser.EmptyArrayBytes;
         }
 
         var response = new System.Text.StringBuilder();

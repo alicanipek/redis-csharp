@@ -27,11 +27,11 @@ public class XReadCommandHandler : ICommandHandler
             var results = await ProcessStreamsAsync(parsedArgs);
             if (results == null)
             {
-                return RespParser.NullBulkStringArrayBytes;
+                return RespParser.NullArrayBytes;
             }
             if (results.Count == 0)
             {
-                return RespParser.EmptyBulkStringArrayBytes;
+                return RespParser.EmptyArrayBytes;
             }
 
             var response = FormatResponse(results);

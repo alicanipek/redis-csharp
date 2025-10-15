@@ -15,11 +15,11 @@ public class InfoCommandHandler(Config config) : ICommandHandler
         {
             return Task.FromResult(RespParser.EncodeBulkStringBytes($"role:slave"));
         }
-        return Task.FromResult(RespParser.EncodeBulkStringBytes(new List<string>
-        {
+        return Task.FromResult(RespParser.EncodeBulkStringBytes(
+        [
             "role:master",
             $"master_replid:{config.ReplicaInfo.Id}",
             $"master_repl_offset:{config.ReplicaInfo.Offset}"
-        }));
+        ]));
     }
 }

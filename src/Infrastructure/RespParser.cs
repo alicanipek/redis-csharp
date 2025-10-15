@@ -6,10 +6,12 @@ public static class RespParser
 {
     public const string OkString = "+OK\r\n";
     public const string NullBulkString = "$-1\r\n";
+    public static readonly string EmptyArray = "*0\r\n";
+    public static readonly string NullArray = "*-1\r\n";
     public static readonly byte[] OkBytes = Encoding.UTF8.GetBytes(OkString);
-    public static readonly byte[] NullBulkBytes = Encoding.UTF8.GetBytes(NullBulkString);
-    public static readonly byte[] NullBulkStringArrayBytes = Encoding.UTF8.GetBytes("*-1\r\n");
-    public static readonly byte[] EmptyBulkStringArrayBytes = Encoding.UTF8.GetBytes("*0\r\n");
+    public static readonly byte[] NullBulkStringBytes = Encoding.UTF8.GetBytes(NullBulkString);
+    public static readonly byte[] NullArrayBytes = Encoding.UTF8.GetBytes(NullArray);
+    public static readonly byte[] EmptyArrayBytes = Encoding.UTF8.GetBytes(EmptyArray);
 
     public static List<object> ParseRespArray(string resp)
     {
@@ -56,9 +58,9 @@ public static class RespParser
         return result;
     }
 
-    public static byte[] EncodeRespArrayBytes(object[] items)
+    public static string EncodeRespArray(object[] items)
     {
-        if (items.Length == 0) return EmptyBulkStringArrayBytes;
+        if (items.Length == 0) return EmptyArray;
 
         var sb = new StringBuilder();
         sb.Append('*');
@@ -68,6 +70,9 @@ public static class RespParser
         {
             switch (item)
             {
+                case null:
+                    sb.Append(NullArray);
+                    break;
                 case string s:
                     sb.Append(EncodeBulkString(s));
                     break;
@@ -77,6 +82,9 @@ public static class RespParser
                 case long n:
                     sb.Append(EncodeInteger(n));
                     break;
+                case string[] arr:
+                    sb.Append(EncodeRespArray(arr));
+                    break;
                 case Exception e:
                     sb.Append($"-ERR {e.Message}\r\n");
                     break;
@@ -84,7 +92,12 @@ public static class RespParser
                     throw new NotSupportedException($"Type {item.GetType()} not supported.");
             }
         }
-        return Encoding.UTF8.GetBytes(sb.ToString());
+        return sb.ToString();
+    }
+
+    public static byte[] EncodeRespArrayBytes(object[] items)
+    {
+        return Encoding.UTF8.GetBytes(EncodeRespArray(items));
     }
 
     public static byte[] EncodeSimpleString(string s)
@@ -106,10 +119,10 @@ public static class RespParser
         return Encoding.UTF8.GetBytes(s);
     }
 
-    public static byte[] EncodeBulkStringBytes(List<string> list)
+    public static byte[] EncodeBulkStringBytes(string[] list)
     {
         var s = "";
-        if (list == null || list.Count == 0)
+        if (list == null || list.Length == 0)
         {
             s = NullBulkString;
         }
@@ -129,7 +142,7 @@ public static class RespParser
         return $"${str.Length}\r\n{str}\r\n";
     }
 
-    public static string EncodeBulkString(List<string> list)
+    public static string EncodeBulkString(string[] list)
     {
         var sb = new StringBuilder();
         var length = list.Select(s => s.Length).Sum();
@@ -156,7 +169,7 @@ public static class RespParser
     {
         return $":{number}\r\n";
     }
-    
+
     public static string EncodeInteger(long number)
     {
         return $":{number}\r\n";
