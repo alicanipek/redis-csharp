@@ -8,8 +8,12 @@ public class GeoLocation
     private const double MAX_LATITUDE = 85.05112878;
     private const double MIN_LONGITUDE = -180;
     private const double MAX_LONGITUDE = 180;
+    private const double EARTH_RADIUS_IN_METERS = 6372797.560856;
     private const double LATITUDE_RANGE = MAX_LATITUDE - MIN_LATITUDE;
     private const double LONGITUDE_RANGE = MAX_LONGITUDE - MIN_LONGITUDE;
+    private const double D_R = Math.PI / 180; // Degrees to radians
+    private static double deg_rad(double ang) { return ang * D_R; }
+    private static double rad_deg(double ang) { return ang / D_R; }
 
     public double Longitude { get; set; }
     public double Latitude { get; set; }
@@ -107,7 +111,27 @@ public class GeoLocation
         // Calculate the center point of the grid cell
         double latitude = (gridLatitudeMin + gridLatitudeMax) / 2;
         double longitude = (gridLongitudeMin + gridLongitudeMax) / 2;
-        
+
         return (latitude, longitude);
+    }
+
+    public double GeohashGetDistance(GeoLocation other)
+    {
+        double lat1r, lon1r, lat2r, lon2r, u, v, a;
+        lon1r = deg_rad(Longitude);
+        lon2r = deg_rad(other.Longitude);
+        v = Math.Sin((lon2r - lon1r) / 2);
+        /* if v == 0 we can avoid doing expensive math when lons are practically the same */
+        if (v == 0.0)
+            return GeohashGetLatDistance(Latitude, other.Latitude);
+        lat1r = deg_rad(Latitude);
+        lat2r = deg_rad(other.Latitude);
+        u = Math.Sin((lat2r - lat1r) / 2);
+        a = u * u + Math.Cos(lat1r) * Math.Cos(lat2r) * v * v;
+        return 2.0 * EARTH_RADIUS_IN_METERS * Math.Asin(Math.Sqrt(a));
+    }
+    private static double GeohashGetLatDistance(double lat1d, double lat2d)
+    {
+        return EARTH_RADIUS_IN_METERS * Math.Abs(deg_rad(lat2d) - deg_rad(lat1d));
     }
 }
