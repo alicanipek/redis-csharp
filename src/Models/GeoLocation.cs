@@ -22,6 +22,12 @@ public class GeoLocation
         Member = member;
     }
 
+    public GeoLocation(double geoCode, string member)
+    {
+        FromGeocode((long)geoCode);
+        Member = member;
+    }
+
     public long Encode()
     {
         // Normalize to the range 0-2^26
@@ -54,7 +60,7 @@ public class GeoLocation
         return result;
     }
 
-    public (double latitude, double longitude) Decode(long geoCode)
+    private void FromGeocode(long geoCode)
     {
         // Align bits of both latitude and longitude to take even-numbered position
         long y = geoCode >> 1;
@@ -64,7 +70,7 @@ public class GeoLocation
         int gridLatitudeNumber = CompactInt64ToInt32(x);
         int gridLongitudeNumber = CompactInt64ToInt32(y);
 
-        return ConvertGridNumbersToCoordinates(gridLatitudeNumber, gridLongitudeNumber);
+        (Latitude, Longitude) = ConvertGridNumbersToCoordinates(gridLatitudeNumber, gridLongitudeNumber);
     }
 
     /// <summary>

@@ -1,5 +1,6 @@
 using System;
 using codecrafters_redis.src.Infrastructure;
+using codecrafters_redis.src.Models;
 using codecrafters_redis.src.Services;
 
 namespace codecrafters_redis.src.CommandHandlers;
@@ -23,8 +24,8 @@ public class GeoPosCommandHandler(SortedSetStorageService sortedSetStorageServic
                 results.Add(null);
                 continue;
             }
-
-            results.Add(new []{"0", "0"});
+            var geoLocation = new GeoLocation((double)score, member);
+            results.Add(new []{geoLocation.Longitude.ToString(), geoLocation.Latitude.ToString()});
         }
         return Task.FromResult(RespParser.EncodeRespArrayBytes(results.ToArray()));
     }
