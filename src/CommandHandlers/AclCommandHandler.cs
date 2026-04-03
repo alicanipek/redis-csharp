@@ -50,7 +50,7 @@ public class AclCommandHandler : ICommandHandler
             var userName = arguments[2].ToString()!;
             return Users.First(u => u.UserName == userName).ToRespArrayBytes();
         }
-        if (arguments.Count == 4 && arguments[1].ToString()?.ToUpper() == "SETUSER" && arguments[3].ToString()!.StartsWith('<'))
+        if (arguments.Count == 4 && arguments[1].ToString()?.ToUpper() == "SETUSER" && arguments[3].ToString()!.StartsWith('>'))
         {
             var userName = arguments[2].ToString()!;
             var user = Users.First(u => u.UserName == userName);
