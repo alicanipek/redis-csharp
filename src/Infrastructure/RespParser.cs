@@ -155,6 +155,11 @@ public static class RespParser
         return sb.ToString();
     }
 
+    public static byte[] EncodeSimpleErrorString(string error, string message)
+    {
+        return Encoding.UTF8.GetBytes($"-{error} {message}\r\n");
+    }
+
     public static byte[] EncodeErrorString(string message)
     {
         return Encoding.UTF8.GetBytes($"-ERR {message}\r\n");

@@ -80,6 +80,7 @@ class Program
         services.AddSingleton<StreamStorageService>();
         services.AddSingleton<SortedSetStorageService>();
         services.AddSingleton<ReplicaManager>();
+        services.AddSingleton<UserManager>();
         services.AddSingleton<CommandProcessor>();
 
 
