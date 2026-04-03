@@ -21,7 +21,7 @@ public class AclCommandHandler : ICommandHandler
         }
         if (arguments.Count == 3 && arguments[1].ToString()?.ToUpper() == "GETUSER" && arguments[2].ToString() == "default")
         {
-            return RespParser.EncodeRespArrayBytes(["flags", Array.Empty<string>()]);
+            return RespParser.EncodeRespArrayBytes(["flags", new List<string> { "nopass" }]);
         }
         return RespParser.EncodeErrorString("unsupported ACL subcommand");
     }
