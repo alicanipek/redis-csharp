@@ -55,8 +55,8 @@ public class AclCommandHandler : ICommandHandler
             var userName = arguments[2].ToString()!;
             var user = Users.First(u => u.UserName == userName);
             var password = arguments[3].ToString()![1..];
-            var sha256Hash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(password)));
-            user.Passwords = [RespParser.EncodeBulkString(sha256Hash)];
+            var sha256Hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(password))).ToLower();
+            user.Passwords = [sha256Hash];
             user.Flags = [.. user.Flags.Where(f => f != "nopass")];
             return RespParser.EncodeSimpleString("OK");
         }
