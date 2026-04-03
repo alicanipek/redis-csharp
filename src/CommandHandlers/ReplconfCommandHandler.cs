@@ -19,7 +19,7 @@ public class ReplconfCommandHandler(Config config, ReplicaManager replicaManager
         {
             return Task.FromResult(RespParser.EncodeErrorString("wrong number of arguments"));
         }
-
+        System.Console.WriteLine("REPLCONF command arguments: " + string.Join(", ", arguments.Select(a => a.ToString())));
         if (string.Equals(arguments[1].ToString(), "GETACK", StringComparison.OrdinalIgnoreCase))
         {
             return Task.FromResult(Encoding.ASCII.GetBytes($"*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n${config.ReplicaInfo.Offset.ToString().Length}\r\n{config.ReplicaInfo.Offset}\r\n"));
