@@ -40,12 +40,13 @@ public class ReplicaClient(ReplicaInfo info, CommandProcessor commandProcessor, 
                 {
                     var response = await commandProcessor.ProcessCommandAsync(command, null);
 
-                    info.Offset += Encoding.ASCII.GetByteCount(command);                    
+                    info.Offset += Encoding.ASCII.GetByteCount(command);
+                    System.Console.WriteLine("Received command from master: " + command);
                     if (command.Contains("GETACK", StringComparison.OrdinalIgnoreCase))
                     {
                         await stream.WriteAsync(response);
                     }
-                    
+
                 }
             }
         };
@@ -93,21 +94,21 @@ public class ReplicaClient(ReplicaInfo info, CommandProcessor commandProcessor, 
         int pos = 0;
         while (pos < input.Length)
         {
-            
+
             while (pos < input.Length && input[pos] != '*')
                 pos++;
 
             if (pos >= input.Length) break;
 
-            
+
             int commandEnd = FindCompleteCommand(input, pos);
             if (commandEnd == -1)
             {
-                
+
                 break;
             }
 
-            
+
             string command = input.Substring(pos, commandEnd - pos);
             result.Add(command);
             pos = commandEnd;
@@ -120,7 +121,7 @@ public class ReplicaClient(ReplicaInfo info, CommandProcessor commandProcessor, 
     {
         if (start >= input.Length || input[start] != '*') return -1;
 
-        
+
         int crlfPos = input.IndexOf("\r\n", start);
         if (crlfPos == -1) return -1;
 
@@ -129,12 +130,12 @@ public class ReplicaClient(ReplicaInfo info, CommandProcessor commandProcessor, 
 
         int pos = crlfPos + 2;
 
-        
+
         for (int i = 0; i < arrayLength; i++)
         {
             if (pos >= input.Length || input[pos] != '$') return -1;
 
-            
+
             crlfPos = input.IndexOf("\r\n", pos);
             if (crlfPos == -1) return -1;
 
@@ -143,7 +144,7 @@ public class ReplicaClient(ReplicaInfo info, CommandProcessor commandProcessor, 
 
             pos = crlfPos + 2;
 
-            
+
             pos += bulkLength + 2;
 
             if (pos > input.Length) return -1;
