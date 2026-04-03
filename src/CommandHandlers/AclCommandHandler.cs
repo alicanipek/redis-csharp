@@ -11,8 +11,18 @@ public class AclCommandHandler : ICommandHandler
 
     public async Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
     {
-        System.Console.WriteLine("Handling ACL command with arguments: " + string.Join(", ", arguments.Select(a => a.ToString())));
-        return RespParser.EncodeBulkStringBytes("default");
-
+        if (arguments.Count < 2)
+        {
+            return RespParser.EncodeErrorString("wrong number of arguments");
+        }
+        if (arguments[1].ToString()?.ToUpper() == "WHOAMI")
+        {
+            return RespParser.EncodeBulkStringBytes("default");
+        }
+        if (arguments.Count == 3 && arguments[1].ToString()?.ToUpper() == "GETUSER" && arguments[2].ToString() == "default")
+        {
+            return RespParser.EncodeRespArrayBytes(["flags", Array.Empty<string>()]);
+        }
+        return RespParser.EncodeErrorString("unsupported ACL subcommand");
     }
 }
