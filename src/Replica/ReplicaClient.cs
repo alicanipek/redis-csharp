@@ -88,6 +88,7 @@ public class ReplicaClient(ReplicaInfo info, CommandProcessor commandProcessor, 
 
     private List<string> ParseCommands(string input)
     {
+        System.Console.WriteLine("Parsing command: " + input);
         var result = new List<string>();
         if (string.IsNullOrEmpty(input)) return result;
 
