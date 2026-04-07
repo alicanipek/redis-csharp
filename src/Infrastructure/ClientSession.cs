@@ -10,12 +10,23 @@ public class ClientSession
     public NetworkStream? ClientStream { get; private set; }
     public HashSet<string> Subscriptions { get; } = new();
     public bool IsInPubSubMode { get; set; } = false;
+    public bool IsAuthenticated { get; set; }
 
-    public ClientSession()
+    public ClientSession(UserManager? userManager = null)
     {
         IsMultiActive = false;
         CommandQueue = new CommandQueue();
         IsReplica = false;
+        
+        if (userManager != null)
+        {
+            var defaultUser = userManager.GetUser("default");
+            IsAuthenticated = defaultUser?.HasNoPass ?? false;
+        }
+        else
+        {
+            IsAuthenticated = false;
+        }
     }
 
     public bool ToggleMultiActiveState(bool isActive)

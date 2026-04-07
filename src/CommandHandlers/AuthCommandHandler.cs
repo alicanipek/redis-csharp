@@ -29,6 +29,10 @@ public class AuthCommandHandler(UserManager userManager) : ICommandHandler
         }
         if (userManager.ValidatePassword(user, password))
         {
+            if (clientSession != null)
+            {
+                clientSession.IsAuthenticated = true;
+            }
             return RespParser.EncodeSimpleString("OK");
         }
         return RespParser.EncodeSimpleErrorString("WRONGPASS", "invalid username or password");

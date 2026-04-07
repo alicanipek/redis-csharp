@@ -10,6 +10,8 @@ public class User(string userName)
     private string[] Passwords { get; set; } = Array.Empty<string>();
     private string[] Flags { get; set; } = ["nopass"];
 
+    public bool HasNoPass => Flags.Contains("nopass");
+
     public void SetPassword(string password)
     {
         var sha256Hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(password))).ToLower();

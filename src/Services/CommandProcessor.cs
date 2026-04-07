@@ -9,6 +9,17 @@ public class CommandProcessor
 {
     private readonly Dictionary<string, ICommandHandler> _handlers;
     private readonly ReplicaManager _replicaManager;
+    
+    // Commands that are allowed without authentication
+    private static readonly HashSet<string> UnauthenticatedAllowedCommands = new()
+    {
+        "AUTH",
+        "PING",
+        "QUIT",
+        "RESET",
+        "HELLO",
+        "SELECT"
+    };
 
     public CommandProcessor(IEnumerable<ICommandHandler> commandHandlers, ReplicaManager replicaManager)
     {
@@ -28,6 +39,13 @@ public class CommandProcessor
         if (string.IsNullOrEmpty(commandName))
         {
             return RespParser.EncodeErrorString("invalid command");
+        }
+
+        // Check authentication - deny if not authenticated and command requires it
+        if (clientSession != null && !clientSession.IsAuthenticated && 
+            !UnauthenticatedAllowedCommands.Contains(commandName))
+        {
+            return RespParser.EncodeSimpleErrorString("NOAUTH", "Authentication required");
         }
 
         if (clientSession?.IsInPubSubMode == true)

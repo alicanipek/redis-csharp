@@ -11,13 +11,15 @@ public class RedisServer
     private readonly TcpListener _server;
     private readonly Config _config;
     private readonly IPubSubService _pubSubService;
+    private readonly UserManager _userManager;
 
-    public RedisServer(CommandProcessor commandProcessor, Config config, IPubSubService pubSubService)
+    public RedisServer(CommandProcessor commandProcessor, Config config, IPubSubService pubSubService, UserManager userManager)
     {
         _commandProcessor = commandProcessor;
         _server = new TcpListener(IPAddress.Any, config.Port);
         _config = config;
         _pubSubService = pubSubService;
+        _userManager = userManager;
     }
 
     public async Task StartAsync()
@@ -39,7 +41,7 @@ public class RedisServer
                 using (client)
                 {
 
-                    var clientSession = new ClientSession();
+                    var clientSession = new ClientSession(_userManager);
 
                     NetworkStream stream = client.GetStream();
                     var buffer = new byte[4096];
