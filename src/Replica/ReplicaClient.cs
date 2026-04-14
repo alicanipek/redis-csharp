@@ -41,7 +41,6 @@ public class ReplicaClient(ReplicaInfo info, CommandProcessor commandProcessor, 
                     var response = await commandProcessor.ProcessCommandAsync(command, null);
 
                     info.Offset += Encoding.ASCII.GetByteCount(command);
-                    System.Console.WriteLine("Received command from master: " + command);
                     if (command.Contains("GETACK", StringComparison.OrdinalIgnoreCase))
                     {
                         await stream.WriteAsync(response);
@@ -88,7 +87,6 @@ public class ReplicaClient(ReplicaInfo info, CommandProcessor commandProcessor, 
 
     private List<string> ParseCommands(string input)
     {
-        System.Console.WriteLine("Parsing command: " + input);
         var result = new List<string>();
         if (string.IsNullOrEmpty(input)) return result;
 
