@@ -4,12 +4,12 @@ using codecrafters_redis.src.Services;
 
 namespace codecrafters_redis.src.CommandHandlers;
 
-public class ZRemCommandHandler(SortedSetStorageService sortedSetStorageService) : ICommandHandler
+public class ZRemCommandHandler(SortedSetStorageService sortedSetStorageService, IWatchedKeysService watchedKeysService) : ICommandHandler
 {
     public string CommandName => "ZREM";
     public bool IsWriteCommand => true;
 
-    public Task<byte[]> HandleAsync(List<object> arguments, Dictionary<int, Dictionary<string, bool>> _watchedKeys, ClientSession? clientSession = null)
+    public Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
     {
         if (arguments.Count < 3)
         {
@@ -20,6 +20,7 @@ public class ZRemCommandHandler(SortedSetStorageService sortedSetStorageService)
         var members = arguments.Skip(2).Select(arg => arg.ToString()!);
         
         var removedCount = sortedSetStorageService.ZRem(key, members);
+        watchedKeysService.MarkKeyAsModified(key);
         
         return Task.FromResult(RespParser.EncodeIntegerBytes(removedCount));
     }

@@ -6,13 +6,13 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace codecrafters_redis.src.CommandHandlers;
 
-public class ExecCommandHandler(IServiceProvider serviceProvider) : ICommandHandler
+public class ExecCommandHandler(IServiceProvider serviceProvider, IWatchedKeysService watchedKeysService) : ICommandHandler
 {
     public string CommandName => "EXEC";
 
     public bool IsWriteCommand => false;
 
-    public async Task<byte[]> HandleAsync(List<object> arguments, Dictionary<int, Dictionary<string, bool>> _watchedKeys, ClientSession? clientSession = null)
+    public async Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
     {
         if (clientSession == null)
         {
@@ -24,46 +24,43 @@ public class ExecCommandHandler(IServiceProvider serviceProvider) : ICommandHand
             return RespParser.EncodeErrorString("EXEC without MULTI");
         }
 
-
         clientSession.ToggleMultiActiveState(false);
 
         if (clientSession.CommandQueue.IsEmpty())
         {
+            watchedKeysService.ClearClientWatchedKeys(clientSession.Id);
             return RespParser.EmptyArrayBytes;
         }
 
         var results = new List<byte[]>();
-        
-        
+
+        // Check if any watched keys were modified
+        if (watchedKeysService.WereAnyKeysModified(clientSession.Id))
+        {
+            watchedKeysService.ClearClientWatchedKeys(clientSession.Id);
+            clientSession.CommandQueue.Clear();
+            return RespParser.NullArrayBytes;
+        }
+
         var commandProcessor = serviceProvider.GetRequiredService<CommandProcessor>();
-        
+
         while (!clientSession.CommandQueue.IsEmpty())
         {
             var queuedCommand = clientSession.CommandQueue.Dequeue();
-            foreach (var (_, watchedKeys) in _watchedKeys)
-            {
-                foreach (var (key, isModified) in watchedKeys)
-                {
-                    System.Console.WriteLine($"Checking key: {key}, isModified: {isModified}, queuedCommand contains key: {queuedCommand.Contains(key)}, queuedCommand: {queuedCommand}, joined queuedCommand: {string.Join(" ", queuedCommand)}");
-                    if (queuedCommand.Contains(key) && isModified)
-                    {
-                        return RespParser.NullArrayBytes;
-                    }
-                }
-            }
-            var result = await commandProcessor.ProcessCommandAsync(queuedCommand, null, _watchedKeys);
+
+            var result = await commandProcessor.ProcessCommandAsync(queuedCommand, null);
             results.Add(result);
         }
 
-        
         var response = new StringBuilder();
         response.Append($"*{results.Count}\r\n");
-        
+
         foreach (var result in results)
         {
             response.Append(Encoding.ASCII.GetString(result));
         }
-
+        
+        watchedKeysService.ClearClientWatchedKeys(clientSession.Id);
         return Encoding.ASCII.GetBytes(response.ToString());
     }
 }

@@ -12,24 +12,25 @@ public class RedisServer
     private readonly Config _config;
     private readonly IPubSubService _pubSubService;
     private readonly UserManager _userManager;
-    private readonly Dictionary<int, Dictionary<string, bool>> _watchedKeys = new();
+    private readonly IWatchedKeysService _watchedKeysService;
 
-    public RedisServer(CommandProcessor commandProcessor, Config config, IPubSubService pubSubService, UserManager userManager)
+    public RedisServer(CommandProcessor commandProcessor, Config config, IPubSubService pubSubService, UserManager userManager, IWatchedKeysService watchedKeysService)
     {
         _commandProcessor = commandProcessor;
         _server = new TcpListener(IPAddress.Any, config.Port);
         _config = config;
         _pubSubService = pubSubService;
         _userManager = userManager;
+        _watchedKeysService = watchedKeysService;
     }
 
     public async Task StartAsync()
     {
         _server.Start();
-        
+
         if (_config.IsReplica && _config.ReplicaInfo != null)
         {
-            var replicaClient = new ReplicaClient(_config.ReplicaInfo, _commandProcessor, _config.Port, _watchedKeys);
+            var replicaClient = new ReplicaClient(_config.ReplicaInfo, _commandProcessor, _config.Port);
             await replicaClient.ConnectToMaster();
         }
 
@@ -62,14 +63,14 @@ public class RedisServer
                             {
                                 clientSession.MarkAsReplica(stream);
                             }
-                            
+
                             if (request.ToUpper().Contains("SUBSCRIBE") || request.ToUpper().Contains("PSUBSCRIBE"))
                             {
                                 clientSession.SetStream(stream);
                                 clientSession.IsInPubSubMode = true;
                             }
-                
-                            byte[] response = await _commandProcessor.ProcessCommandAsync(request, clientSession, _watchedKeys);
+
+                            byte[] response = await _commandProcessor.ProcessCommandAsync(request, clientSession);
                             await stream.WriteAsync(response, 0, response.Length);
                         }
                     }
@@ -84,6 +85,9 @@ public class RedisServer
                         {
                             _pubSubService.CleanupClient(clientSession);
                         }
+                        
+                        // Clean up watched keys for this client
+                        _watchedKeysService.ClearClientWatchedKeys(clientSession.Id);
                     }
                 }
             });

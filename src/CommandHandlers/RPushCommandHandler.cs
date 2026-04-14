@@ -4,19 +4,12 @@ using codecrafters_redis.src.Services;
 
 namespace codecrafters_redis.src.CommandHandlers;
 
-public class RPushCommandHandler : ICommandHandler
+public class RPushCommandHandler(ListStorageService listService, IWatchedKeysService watchedKeysService) : ICommandHandler
 {
-    private readonly ListStorageService _listService;
-
     public string CommandName => "RPUSH";
     public bool IsWriteCommand => true; 
 
-    public RPushCommandHandler(ListStorageService listService)
-    {
-        _listService = listService;
-    }
-
-    public async Task<byte[]> HandleAsync(List<object> arguments, Dictionary<int, Dictionary<string, bool>> _watchedKeys, ClientSession? clientSession = null)
+    public async Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
     {
         if (arguments.Count < 3)
         {
@@ -26,7 +19,8 @@ public class RPushCommandHandler : ICommandHandler
         var key = arguments[1].ToString()!;
         var values = arguments.Skip(2).Select(v => v.ToString()!).ToList();
 
-        var count = await _listService.RPushAsync(key, values);
+        var count = await listService.RPushAsync(key, values);
+        watchedKeysService.MarkKeyAsModified(key);
 
         return RespParser.EncodeIntegerBytes(count);
     }

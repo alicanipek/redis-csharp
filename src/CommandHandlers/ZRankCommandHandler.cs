@@ -6,7 +6,7 @@ public class ZRankCommandHandler(SortedSetStorageService sortedSetStorageService
 {
     public string CommandName => "ZRANK";
     public bool IsWriteCommand => false;
-    public Task<byte[]> HandleAsync(List<object> arguments, Dictionary<int, Dictionary<string, bool>> _watchedKeys, ClientSession? clientSession = null)
+    public Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
     {
         if (arguments.Count != 3)
         {

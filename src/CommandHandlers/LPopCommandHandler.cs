@@ -4,19 +4,12 @@ using codecrafters_redis.src.Services;
 
 namespace codecrafters_redis.src.CommandHandlers;
 
-public class LPopCommandHandler : ICommandHandler
+public class LPopCommandHandler(ListStorageService listService, IWatchedKeysService watchedKeysService) : ICommandHandler
 {
-    private readonly ListStorageService _listService;
-
     public string CommandName => "LPOP";
     public bool IsWriteCommand => true; 
 
-    public LPopCommandHandler(ListStorageService listService)
-    {
-        _listService = listService;
-    }
-
-    public async Task<byte[]> HandleAsync(List<object> arguments, Dictionary<int, Dictionary<string, bool>> _watchedKeys, ClientSession? clientSession = null)
+    public async Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
     {
         if (arguments.Count < 2)
         {
@@ -24,11 +17,12 @@ public class LPopCommandHandler : ICommandHandler
         }
 
         var key = arguments[1].ToString()!;
+        watchedKeysService.MarkKeyAsModified(key);
 
         if (arguments.Count > 2)
         {
             var count = int.Parse(arguments[2].ToString()!);
-            var poppedItems = await _listService.LPopAsync(key, count);
+            var poppedItems = await listService.LPopAsync(key, count);
 
             var response = $"*{poppedItems.Count}\r\n";
             foreach (var item in poppedItems)
@@ -39,7 +33,7 @@ public class LPopCommandHandler : ICommandHandler
         }
         else
         {
-            var popped = await _listService.LPopAsync(key);
+            var popped = await listService.LPopAsync(key);
             return RespParser.EncodeBulkStringBytes(popped);
         }
     }

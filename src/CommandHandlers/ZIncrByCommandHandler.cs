@@ -4,12 +4,12 @@ using codecrafters_redis.src.Services;
 
 namespace codecrafters_redis.src.CommandHandlers;
 
-public class ZIncrByCommandHandler(SortedSetStorageService sortedSetStorageService) : ICommandHandler
+public class ZIncrByCommandHandler(SortedSetStorageService sortedSetStorageService, IWatchedKeysService watchedKeysService) : ICommandHandler
 {
     public string CommandName => "ZINCRBY";
     public bool IsWriteCommand => true;
 
-    public Task<byte[]> HandleAsync(List<object> arguments, Dictionary<int, Dictionary<string, bool>> _watchedKeys, ClientSession? clientSession = null)
+    public Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
     {
         if (arguments.Count != 4)
         {
@@ -26,6 +26,7 @@ public class ZIncrByCommandHandler(SortedSetStorageService sortedSetStorageServi
         var member = arguments[3].ToString()!;
         
         var newScore = sortedSetStorageService.ZIncrBy(key, member, increment);
+        watchedKeysService.MarkKeyAsModified(key);
         
         return Task.FromResult(RespParser.EncodeBulkStringBytes(newScore.ToString()));
     }

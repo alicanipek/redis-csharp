@@ -81,6 +81,7 @@ class Program
         services.AddSingleton<SortedSetStorageService>();
         services.AddSingleton<ReplicaManager>();
         services.AddSingleton<UserManager>();
+        services.AddSingleton<IWatchedKeysService, WatchedKeysService>();
         services.AddSingleton<CommandProcessor>();
 
 

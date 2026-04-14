@@ -7,12 +7,12 @@ using codecrafters_redis.src.Services;
 
 namespace codecrafters_redis.src.CommandHandlers;
 
-public class IncrCommandHandler(StorageService storageService) : ICommandHandler 
+public class IncrCommandHandler(StorageService storageService, IWatchedKeysService watchedKeysService) : ICommandHandler
 {
     public string CommandName => "INCR";
-    public bool IsWriteCommand => true; 
+    public bool IsWriteCommand => true;
 
-    public async Task<byte[]> HandleAsync(List<object> arguments, Dictionary<int, Dictionary<string, bool>> _watchedKeys, ClientSession? clientSession = null)
+    public async Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
     {
         if (arguments.Count != 2)
         {
@@ -24,10 +24,7 @@ public class IncrCommandHandler(StorageService storageService) : ICommandHandler
         try
         {
             var newValue = await storageService.IncrementKeyAsync(key);
-            if (clientSession != null && _watchedKeys.ContainsKey(clientSession.Id) && _watchedKeys[clientSession.Id].ContainsKey(key))
-            {
-                _watchedKeys[clientSession.Id][key] = true; 
-            }
+            watchedKeysService.MarkKeyAsModified(key);
             return RespParser.EncodeIntegerBytes(newValue);
         }
         catch (FormatException)

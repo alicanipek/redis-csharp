@@ -5,13 +5,13 @@ using codecrafters_redis.src.Services;
 
 namespace codecrafters_redis.src.CommandHandlers;
 
-public class GeoAddCommandHandler(SortedSetStorageService sortedSetStorageService) : ICommandHandler
+public class GeoAddCommandHandler(SortedSetStorageService sortedSetStorageService, IWatchedKeysService watchedKeysService) : ICommandHandler
 {
     public string CommandName => "GEOADD";
 
-    public bool IsWriteCommand => false;
+    public bool IsWriteCommand => true;
 
-    public Task<byte[]> HandleAsync(List<object> arguments, Dictionary<int, Dictionary<string, bool>> _watchedKeys, ClientSession? clientSession = null)
+    public Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
     {
         var key = arguments[1].ToString()!;
         var location = new GeoLocation(
@@ -26,8 +26,9 @@ public class GeoAddCommandHandler(SortedSetStorageService sortedSetStorageServic
         }
 
         var addedCount = sortedSetStorageService.ZAdd(key, new List<SetItem>{ new SetItem(location.Encode(), location.Member) });
+        watchedKeysService.MarkKeyAsModified(key);
+        
         return Task.FromResult(RespParser.EncodeIntegerBytes(addedCount));
-
     }
 
     private bool IsValidLatitude(double latitude)

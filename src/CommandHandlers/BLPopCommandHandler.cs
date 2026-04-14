@@ -4,12 +4,12 @@ using codecrafters_redis.src.Services;
 
 namespace codecrafters_redis.src.CommandHandlers;
 
-public class BLPopCommandHandler(ListStorageService listService) : ICommandHandler
+public class BLPopCommandHandler(ListStorageService listService, IWatchedKeysService watchedKeysService) : ICommandHandler
 {
     public string CommandName => "BLPOP";
     public bool IsWriteCommand => true; 
 
-    public async Task<byte[]> HandleAsync(List<object> arguments, Dictionary<int, Dictionary<string, bool>> _watchedKeys, ClientSession? clientSession = null)
+    public async Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
     {
         if (arguments.Count < 2)
         {
@@ -25,6 +25,8 @@ public class BLPopCommandHandler(ListStorageService listService) : ICommandHandl
 
         var timeoutms = (int)(timeout * 1000);
         var item = await listService.BLPopAsync(key, timeoutms);
+        
+        watchedKeysService.MarkKeyAsModified(key);
         
         if (item == null)
         {

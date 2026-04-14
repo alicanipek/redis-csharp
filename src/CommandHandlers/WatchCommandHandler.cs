@@ -4,13 +4,18 @@ using codecrafters_redis.src.Services;
 
 namespace codecrafters_redis.src.CommandHandlers;
 
-public class WatchCommandHandler : ICommandHandler
+public class WatchCommandHandler(IWatchedKeysService watchedKeysService) : ICommandHandler
 {
     public string CommandName => "WATCH";
     public bool IsWriteCommand => false; 
 
-    public async Task<byte[]> HandleAsync(List<object> arguments, Dictionary<int, Dictionary<string, bool>> _watchedKeys, ClientSession? clientSession = null)
+    public async Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
     {
+        if (clientSession == null)
+        {
+            return RespParser.EncodeErrorString("ERR Client is not in a multi state");
+        }
+
         if (clientSession.IsMultiActive)
         {
             return RespParser.EncodeErrorString("ERR WATCH inside MULTI is not allowed");
@@ -18,11 +23,7 @@ public class WatchCommandHandler : ICommandHandler
 
         foreach (var arg in arguments.Skip(1))
         {
-            if (!_watchedKeys.ContainsKey(clientSession.Id))
-            {
-                _watchedKeys[clientSession.Id] = new Dictionary<string, bool>();
-            }
-            _watchedKeys[clientSession.Id][arg.ToString() ?? string.Empty] = false;
+            watchedKeysService.AddWatchedKey(clientSession.Id, arg.ToString() ?? string.Empty);
         }
 
         return RespParser.OkBytes;

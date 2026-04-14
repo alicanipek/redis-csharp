@@ -9,7 +9,7 @@ public class ConfigCommandHandler(Config config) : ICommandHandler
     public string CommandName => "CONFIG";
     public bool IsWriteCommand => false;
 
-    public Task<byte[]> HandleAsync(List<object> arguments, Dictionary<int, Dictionary<string, bool>> _watchedKeys, ClientSession? clientSession = null)
+    public Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
     {
         if (arguments.Count < 2)
         {
