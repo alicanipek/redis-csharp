@@ -11,6 +11,17 @@ public class WatchCommandHandler : ICommandHandler
 
     public async Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
     {
+        System.Console.WriteLine("multi state: " + clientSession?.IsMultiActive); 
+        if (clientSession.IsMultiActive)
+        {
+            return RespParser.EncodeErrorString("ERR WATCH inside MULTI is not allowed");
+        }
+
+        foreach (var arg in arguments.Skip(1))
+        {
+            clientSession.WatchedKeys.Add(arg.ToString());
+        }
+
         return RespParser.OkBytes;
     }
 }

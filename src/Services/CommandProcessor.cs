@@ -58,7 +58,7 @@ public class CommandProcessor
         }
 
 
-        if (commandName != "EXEC" && commandName != "DISCARD" && clientSession != null && clientSession.IsMultiActive)
+        if (commandName != "EXEC" && commandName != "DISCARD" && commandName != "WATCH" && clientSession != null && clientSession.IsMultiActive)
         {
             clientSession.CommandQueue.Enqueue(request);
             return RespParser.EncodeSimpleString("QUEUED");

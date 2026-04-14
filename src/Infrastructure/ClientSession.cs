@@ -11,6 +11,7 @@ public class ClientSession
     public HashSet<string> Subscriptions { get; } = new();
     public bool IsInPubSubMode { get; set; } = false;
     public bool IsAuthenticated { get; set; }
+    public List<string> WatchedKeys { get; } = new();
 
     public ClientSession(UserManager? userManager = null)
     {
