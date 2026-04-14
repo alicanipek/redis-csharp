@@ -9,7 +9,7 @@ public class ZIncrByCommandHandler(SortedSetStorageService sortedSetStorageServi
     public string CommandName => "ZINCRBY";
     public bool IsWriteCommand => true;
 
-    public Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
+    public Task<byte[]> HandleAsync(List<object> arguments, Dictionary<int, Dictionary<string, bool>> _watchedKeys, ClientSession? clientSession = null)
     {
         if (arguments.Count != 4)
         {

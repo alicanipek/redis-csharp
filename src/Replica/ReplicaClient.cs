@@ -10,7 +10,7 @@ using codecrafters_redis.src.Services;
 
 namespace codecrafters_redis.src.Replica;
 
-public class ReplicaClient(ReplicaInfo info, CommandProcessor commandProcessor, int port)
+public class ReplicaClient(ReplicaInfo info, CommandProcessor commandProcessor, int port, Dictionary<int, Dictionary<string, bool>> watchedKeys)
 {
     private readonly TimeSpan _timeout = TimeSpan.FromSeconds(30);
     private readonly byte[] _buffer = new byte[4096];
@@ -38,7 +38,7 @@ public class ReplicaClient(ReplicaInfo info, CommandProcessor commandProcessor, 
                 var commands = ParseCommands(request);
                 foreach (var command in commands)
                 {
-                    var response = await commandProcessor.ProcessCommandAsync(command, null);
+                    var response = await commandProcessor.ProcessCommandAsync(command, null, watchedKeys);
 
                     info.Offset += Encoding.ASCII.GetByteCount(command);
                     if (command.Contains("GETACK", StringComparison.OrdinalIgnoreCase))

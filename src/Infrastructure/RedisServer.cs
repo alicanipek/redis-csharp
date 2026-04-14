@@ -12,6 +12,7 @@ public class RedisServer
     private readonly Config _config;
     private readonly IPubSubService _pubSubService;
     private readonly UserManager _userManager;
+    private readonly Dictionary<int, Dictionary<string, bool>> _watchedKeys = new();
 
     public RedisServer(CommandProcessor commandProcessor, Config config, IPubSubService pubSubService, UserManager userManager)
     {
@@ -28,7 +29,7 @@ public class RedisServer
         
         if (_config.IsReplica && _config.ReplicaInfo != null)
         {
-            var replicaClient = new ReplicaClient(_config.ReplicaInfo, _commandProcessor, _config.Port);
+            var replicaClient = new ReplicaClient(_config.ReplicaInfo, _commandProcessor, _config.Port, _watchedKeys);
             await replicaClient.ConnectToMaster();
         }
 
@@ -68,7 +69,7 @@ public class RedisServer
                                 clientSession.IsInPubSubMode = true;
                             }
                 
-                            byte[] response = await _commandProcessor.ProcessCommandAsync(request, clientSession);
+                            byte[] response = await _commandProcessor.ProcessCommandAsync(request, clientSession, _watchedKeys);
                             await stream.WriteAsync(response, 0, response.Length);
                         }
                     }

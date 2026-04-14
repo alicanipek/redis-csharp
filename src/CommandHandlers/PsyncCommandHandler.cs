@@ -13,7 +13,7 @@ public class PsyncCommandHandler(Config config, ReplicaManager replicaManager) :
     public string CommandName => "PSYNC";
     public bool IsWriteCommand => false;
 
-    public Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
+    public Task<byte[]> HandleAsync(List<object> arguments, Dictionary<int, Dictionary<string, bool>> _watchedKeys, ClientSession? clientSession = null)
     {
         string rdbfile = "UkVESVMwMDEx+glyZWRpcy12ZXIFNy4yLjD6CnJlZGlzLWJpdHPAQPoFY3RpbWXCbQi8ZfoIdXNlZC1tZW3CsMQQAPoIYW9mLWJhc2XAAP/wbjv+wP9aog==";
         byte[] encodedFile = Convert.FromBase64String(rdbfile);

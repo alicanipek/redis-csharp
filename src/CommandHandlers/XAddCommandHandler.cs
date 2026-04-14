@@ -16,7 +16,7 @@ public class XAddCommandHandler : ICommandHandler
     public string CommandName => "XADD";
     public bool IsWriteCommand => true; 
 
-    public async Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
+    public async Task<byte[]> HandleAsync(List<object> arguments, Dictionary<int, Dictionary<string, bool>> _watchedKeys, ClientSession? clientSession = null)
     {
         if (arguments.Count < 4)
         {

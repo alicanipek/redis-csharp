@@ -9,7 +9,7 @@ public class ZRevRangeCommandHandler(SortedSetStorageService sortedSetStorageSer
     public string CommandName => "ZREVRANGE";
     public bool IsWriteCommand => false;
 
-    public Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
+    public Task<byte[]> HandleAsync(List<object> arguments, Dictionary<int, Dictionary<string, bool>> _watchedKeys, ClientSession? clientSession = null)
     {
         if (arguments.Count < 4)
         {

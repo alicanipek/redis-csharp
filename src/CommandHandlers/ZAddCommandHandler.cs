@@ -6,7 +6,7 @@ public class ZAddCommandHandler(SortedSetStorageService sortedSetStorageService)
 {
     public string CommandName => "ZADD";
     public bool IsWriteCommand => true;
-    public Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
+    public Task<byte[]> HandleAsync(List<object> arguments, Dictionary<int, Dictionary<string, bool>> _watchedKeys, ClientSession? clientSession = null)
     {
         if (arguments.Count < 4 || arguments.Count % 2 != 0)
         {

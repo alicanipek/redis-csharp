@@ -18,7 +18,7 @@ public class TypeCommandHandler : ICommandHandler
         _streamStorageService = streamStorageService;
     }
 
-    public async Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
+    public async Task<byte[]> HandleAsync(List<object> arguments, Dictionary<int, Dictionary<string, bool>> _watchedKeys, ClientSession? clientSession = null)
     {
         if (arguments.Count != 2)
         {

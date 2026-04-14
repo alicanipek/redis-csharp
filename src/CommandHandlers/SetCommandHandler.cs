@@ -16,7 +16,7 @@ public class SetCommandHandler : ICommandHandler
         _storageService = storageService;
     }
 
-    public async Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
+    public async Task<byte[]> HandleAsync(List<object> arguments, Dictionary<int, Dictionary<string, bool>> _watchedKeys, ClientSession? clientSession = null)
     {
         if (arguments.Count < 3)
         {
@@ -32,6 +32,20 @@ public class SetCommandHandler : ICommandHandler
             expirationMs = int.Parse(arguments[4].ToString()!);
         }
 
+        if (clientSession != null)
+        {
+            foreach (var (_, keys) in _watchedKeys)
+            {
+                foreach (var (watchedKey, isModified) in keys)
+                {
+                    if (key == watchedKey)
+                    {
+                        System.Console.WriteLine($"Marking key as modified: {key}");
+                        keys[watchedKey] = true; 
+                    }
+                }
+            }
+        }
         await _storageService.SetAsync(key, value, expirationMs);
         return RespParser.OkBytes;
     }

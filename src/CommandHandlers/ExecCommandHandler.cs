@@ -12,7 +12,7 @@ public class ExecCommandHandler(IServiceProvider serviceProvider) : ICommandHand
 
     public bool IsWriteCommand => false;
 
-    public async Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
+    public async Task<byte[]> HandleAsync(List<object> arguments, Dictionary<int, Dictionary<string, bool>> _watchedKeys, ClientSession? clientSession = null)
     {
         if (clientSession == null)
         {
@@ -40,7 +40,18 @@ public class ExecCommandHandler(IServiceProvider serviceProvider) : ICommandHand
         while (!clientSession.CommandQueue.IsEmpty())
         {
             var queuedCommand = clientSession.CommandQueue.Dequeue();
-            var result = await commandProcessor.ProcessCommandAsync(queuedCommand, null);
+            foreach (var (_, watchedKeys) in _watchedKeys)
+            {
+                foreach (var (key, isModified) in watchedKeys)
+                {
+                    System.Console.WriteLine($"Checking key: {key}, isModified: {isModified}, queuedCommand contains key: {queuedCommand.Contains(key)}, queuedCommand: {queuedCommand}, joined queuedCommand: {string.Join(" ", queuedCommand)}");
+                    if (queuedCommand.Contains(key) && isModified)
+                    {
+                        return RespParser.NullArrayBytes;
+                    }
+                }
+            }
+            var result = await commandProcessor.ProcessCommandAsync(queuedCommand, null, _watchedKeys);
             results.Add(result);
         }
 

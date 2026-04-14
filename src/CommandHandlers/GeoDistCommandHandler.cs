@@ -11,7 +11,7 @@ public class GeoDistCommandHandler(SortedSetStorageService sortedSetStorageServi
 
     public bool IsWriteCommand => false;
 
-    public Task<byte[]> HandleAsync(List<object> arguments, ClientSession? clientSession = null)
+    public Task<byte[]> HandleAsync(List<object> arguments, Dictionary<int, Dictionary<string, bool>> _watchedKeys, ClientSession? clientSession = null)
     {
         var key = arguments[1].ToString()!;
         var member1 = arguments[2].ToString()!;

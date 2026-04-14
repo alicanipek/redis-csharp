@@ -27,7 +27,7 @@ public class CommandProcessor
         _replicaManager = replicaManager;
     }
     
-    public async Task<byte[]> ProcessCommandAsync(string request, ClientSession? clientSession)
+    public async Task<byte[]> ProcessCommandAsync(string request, ClientSession? clientSession, Dictionary<int, Dictionary<string, bool>> _watchedKeys)
     {
         var parsed = RespParser.ParseRespArray(request);
         if (parsed.Count == 0)
@@ -69,7 +69,7 @@ public class CommandProcessor
 
         if (handler != null)
         {
-            var response = await handler.HandleAsync(parsed, clientSession);
+            var response = await handler.HandleAsync(parsed, _watchedKeys, clientSession);
 
             if (handler.IsWriteCommand && (clientSession == null || !clientSession.IsReplica))
             {

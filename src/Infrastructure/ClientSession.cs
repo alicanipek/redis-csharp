@@ -4,6 +4,8 @@ namespace codecrafters_redis.src.Infrastructure;
 
 public class ClientSession
 {
+    public int Id { get; } = Interlocked.Increment(ref _idCounter);
+    private static int _idCounter = 0;
     public bool IsMultiActive { get; private set; }
     public CommandQueue CommandQueue { get; }
     public bool IsReplica { get; private set; }
@@ -11,7 +13,6 @@ public class ClientSession
     public HashSet<string> Subscriptions { get; } = new();
     public bool IsInPubSubMode { get; set; } = false;
     public bool IsAuthenticated { get; set; }
-    public List<string> WatchedKeys { get; } = new();
 
     public ClientSession(UserManager? userManager = null)
     {
