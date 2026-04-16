@@ -21,4 +21,5 @@ public interface IWatchedKeysService
     /// Clears all watched keys for a client (called on DISCARD, EXEC, client disconnect)
     /// </summary>
     void ClearClientWatchedKeys(int clientId);
+    void RemoveWatchedKeys(int clientId);
 }

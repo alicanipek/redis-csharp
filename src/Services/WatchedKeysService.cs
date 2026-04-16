@@ -50,4 +50,12 @@ public class WatchedKeysService : IWatchedKeysService
             _watchedKeys.Remove(clientId);
         }
     }
+
+    public void RemoveWatchedKeys(int clientId)
+    {
+        lock (_lock)
+        {
+            _watchedKeys.Remove(clientId);
+        }
+    }
 }
